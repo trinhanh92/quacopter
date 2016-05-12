@@ -5,7 +5,7 @@
 
 /******************************************************************************
 * @brief This function used to encrypt a plain text o MD5 
-* 	
+*   
 * @param[in] str - string buffer
 * @param[in] length - string buffer length
 * @return    MD5 string
