@@ -8,17 +8,7 @@
 #include "misc.h"
 #include "microhttpd.h"
 #include <openssl/md5.h>
-
-const char *askpage = "<html><body>\
-                    What is your name, Sir?<br>\
-                    <form action=\"/namepost\" method=\"post\">\
-                    <input name=\"name\" type=\"text\"\
-                    <input type=\"submit\" value=\" Send \"></form>\
-                    </body></html>";
-const char *greetingpage =
-"<html><body><h1>Welcome, %s!</center></h1></body></html>";
-const char *errorpage =
-"<html><body>This doesn’t seem to be right.</body></html>";
+#include "jsmn.h"
 
 static int
 print_out_key (void *cls, enum MHD_ValueKind kind, const char *key,
@@ -42,31 +32,6 @@ const char* resp, int status)
     MHD_destroy_response (response);
     return ret;
 }
-
-// static int
-// iterate_post (void *coninfo_cls, enum MHD_ValueKind kind, const char *key,
-//                 const char *filename, const char *content_type,
-//                 const char *transfer_encoding, const char *data, uint64_t off,
-//                 size_t size)
-// {
-//     struct connection_info_struct *con_info = coninfo_cls;
-//     if (0 == strcmp (key, "name")) {
-//         printf("iterate_post: %s\n", key);
-//         if ((size > 0) && (size <= MAX_NAME_SIZE)) {
-//             char *answerstring;
-//             answerstring = malloc (MAX_ANSWER_SIZE);
-//             if (!answerstring)
-//                 return MHD_NO;
-//             snprintf (answerstring, MAX_ANSWER_SIZE, greetingpage, data);
-//             con_info->answerstring = answerstring;
-//         }
-//         else
-//             con_info->answerstring = NULL;
-//         return MHD_NO;
-//     }
-//     printf("%d %s\n", __LINE__, __func__);
-//     return MHD_YES;
-// }
 
 void
 request_completed (void *cls, struct MHD_Connection *connection,
@@ -104,7 +69,6 @@ answer_to_connection (void *cls, struct MHD_Connection *connection,
             return MHD_NO;
         }
         con_data->is_parsed = false;
-        // con_data->receive_data = NULL;
         if (0 == strcmp (method, "POST")) {
             con_data->connectiontype = POST;
         } else {
@@ -135,8 +99,5 @@ answer_to_connection (void *cls, struct MHD_Connection *connection,
         status_code = MHD_HTTP_NOT_FOUND;
         return send_resp (connection, NOT_FOUND, MHD_HTTP_NOT_FOUND);
     }
-    printf("handle request\n");
-    // return MHD_YES;
     return send_resp (connection, NOT_FOUND, MHD_HTTP_OK);
-    // return send_resp (connection, NOT_FOUND, MHD_HTTP_NOT_FOUND);
 }
