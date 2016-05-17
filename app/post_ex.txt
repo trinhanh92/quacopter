@@ -1,2 +1,2 @@
-curl -H "Content-Type: application/json" -X POST -d '{"x":0,"y":0,"z":0, "sig":"slfjdfjsfhsakjfhjkkj414"}' http://localhost:8080/api/move
+curl -H "Content-Type: application/json" -X POST -d '{"x":0,"y":0,"z":0, "sig":"aa99fb529f1576c335d1fe0c691ea778"}' http://localhost:8080/api/move
 curl -X GET http://localhost:8080/api/info

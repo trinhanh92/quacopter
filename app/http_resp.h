@@ -4,13 +4,15 @@
 #include <stdbool.h>
 #include "microhttpd.h"
 
-#define MAX_RESP_BUFF_SIZE   5*1024
-#define RESP_DATA_FORMAT     "{\r\n\"error\": %d,\r\n\"data\": \"%s\"\r\n}\r\n"
+#define PORT 8080
 
+#define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": \"%s\"}"
+#define RESP_DEV_INFO_FORMAT "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
 // HTTP method
 #define GET                  0
 #define POST                 1
 
+#define MAX_RESP_BUFF_SIZE   5*1024
 #define POST_BUFFER_SIZE     512
 #define MAX_NAME_SIZE        20
 #define MAX_ANSWER_SIZE      512
@@ -20,7 +22,7 @@
 #define INVALiD_SIGNATURE   -2
 #define NO_SUPPORT          -3
 #define NOT_FOUND			"<html><body>404 Not found.</body></html>"
-// 
+
 struct connection_info_struct
 {
     int connectiontype;
@@ -31,11 +33,25 @@ struct connection_info_struct
 struct connection_data_s {
 	bool is_parsed;
 	int  connectiontype;
+	char resp_data[MAX_RESP_BUFF_SIZE];
 };
 
+/******************************************************************************
+*
+*
+*
+*
+*/
 void
 request_completed (void *cls, struct MHD_Connection *connection,
                         void **con_cls, enum MHD_RequestTerminationCode toe);
+
+/******************************************************************************
+*
+*
+*
+*
+*/
 int
 answer_to_connection (void *cls, struct MHD_Connection *connection,
                         const char *url, const char *method,
