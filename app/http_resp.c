@@ -36,7 +36,7 @@ send_resp(struct MHD_Connection *connection,
     int ret;
     struct MHD_Response *response;
     response = MHD_create_response_from_buffer (strlen (resp), resp,
-                    MHD_RESPMEM_PERSISTENT);
+                    MHD_RESPMEM_MUST_COPY);
     // response = MHD_create_response_from_buffer (2, (void*) resp,
     //                 MHD_RESPMEM_PERSISTENT);
     if (!response) 
@@ -66,6 +66,7 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     if (0 == strcmp(url, "/api/move")) {            // case 1.2
         // continue process
     } else if (0 == strcmp(url, "/api/info")) {      // case 1.1
+        // strcpy(resp, "No support\r\n");
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
         return MHD_YES;
     } else {                                        // unsupport command
