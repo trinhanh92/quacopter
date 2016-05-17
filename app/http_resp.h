@@ -12,28 +12,23 @@
 #define GET                  0
 #define POST                 1
 
-#define MAX_RESP_BUFF_SIZE   5*1024
+#define MAX_RESP_BUFF_SIZE   1024
 #define POST_BUFFER_SIZE     512
 #define MAX_NAME_SIZE        20
 #define MAX_ANSWER_SIZE      512
 // SERVER_RESP_ERROR_CODE
 #define SUCCESS              0
 #define INVALID_PARAMS      -1
-#define INVALiD_SIGNATURE   -2
+#define INVALID_SIGNATURE   -2
 #define NO_SUPPORT          -3
 #define NOT_FOUND			"<html><body>404 Not found.</body></html>"
 
-struct connection_info_struct
-{
-    int connectiontype;
-    char *answerstring;
-    struct MHD_PostProcessor *postprocessor;
-};
 
 struct connection_data_s {
 	bool is_parsed;
 	int  connectiontype;
-	char resp_data[MAX_RESP_BUFF_SIZE];
+	char *recv_data;
+	int  recv_data_len;
 };
 
 /******************************************************************************
@@ -53,7 +48,7 @@ request_completed (void *cls, struct MHD_Connection *connection,
 *
 */
 int
-answer_to_connection (void *cls, struct MHD_Connection *connection,
+http_resp_handler (void *cls, struct MHD_Connection *connection,
                         const char *url, const char *method,
                         const char *version, const char *upload_data,
                         size_t *upload_data_size, void **con_cls);

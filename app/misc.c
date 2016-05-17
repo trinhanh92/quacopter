@@ -67,13 +67,13 @@ int json_parser(const char *json_string, int len, const char *key, char *value_r
     r = jsmn_parse(&parser, json_string, len, t, sizeof(t)/sizeof(t[0]));
     if (r < 0) {
         printf("Failed to parse JSON: %d\n", r);
-        return 1;
+        return -1;
     }
 
     /* Assume the top-level element is an object */
     if (r < 1 || t[0].type != JSMN_OBJECT) {
         printf("Object expected\n");
-        return 1;
+        return -1;
     }
 
 
@@ -81,12 +81,15 @@ int json_parser(const char *json_string, int len, const char *key, char *value_r
     for (i = 1; i < r; i++) {
         if (jsoneq(json_string, &t[i], key) == 0) {
             /* We may use strndup() to fetch string value */
-            printf("[json] - value return: %.*s\n", t[i+1].end-t[i+1].start,
-                    json_string + t[i+1].start);
+            // printf("[json] - value return: %.*s\n", t[i+1].end-t[i+1].start,
+            //         json_string + t[i+1].start);
             memcpy(value_ret, json_string + t[i+1].start,  t[i+1].end-t[i+1].start);
             i++;
             break;
         }
+    }
+    if ('\0' == value_ret[0]) {
+        return -1;
     }
     return 0;
 }

@@ -13,7 +13,7 @@ main ()
 {
     struct MHD_Daemon *daemon;
     daemon = MHD_start_daemon (MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL,
-                    &answer_to_connection, NULL,
+                    &http_resp_handler, NULL,
                     MHD_OPTION_NOTIFY_COMPLETED, &request_completed,
                     NULL, MHD_OPTION_END);
 
