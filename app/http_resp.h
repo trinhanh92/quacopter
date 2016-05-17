@@ -1,10 +1,11 @@
 #ifndef __HTTP_RESP_H_
 #define __HTTP_RESP_H_
 
+#include <stdbool.h>
 #include "microhttpd.h"
 
 #define MAX_RESP_BUFF_SIZE   5*1024
-#define RESP_DATA_FORMAT     "{\r\n\"error\": %d,\r\n\"data\": %s\r\n}\r\n"
+#define RESP_DATA_FORMAT     "{\r\n\"error\": %d,\r\n\"data\": \"%s\"\r\n}\r\n"
 
 // HTTP method
 #define GET                  0
@@ -18,13 +19,18 @@
 #define INVALID_PARAMS      -1
 #define INVALiD_SIGNATURE   -2
 #define NO_SUPPORT          -3
-
+#define NOT_FOUND			"<html><body>404 Not found.</body></html>"
 // 
 struct connection_info_struct
 {
     int connectiontype;
     char *answerstring;
     struct MHD_PostProcessor *postprocessor;
+};
+
+struct connection_data_s {
+	bool is_parsed;
+	int  connectiontype;
 };
 
 void

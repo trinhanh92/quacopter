@@ -7,8 +7,8 @@
 #include <microhttpd.h>
 #include "http_resp.h"
 #include "misc.h"
+#define PORT 8080
 
-#define PORT 8888
 // static int
 // print_out_key (void *cls, enum MHD_ValueKind kind, const char *key,
 // const char *value)
@@ -50,8 +50,11 @@ main ()
     struct MHD_Daemon *daemon;
     daemon = MHD_start_daemon (MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL,
                     &answer_to_connection, NULL,
-                    MHD_OPTION_NOTIFY_COMPLETED, request_completed,
+                    MHD_OPTION_NOTIFY_COMPLETED, &request_completed,
                     NULL, MHD_OPTION_END);
+
+    // daemon = MHD_start_daemon (MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL,
+    //                      &answer_to_connection, NULL, MHD_OPTION_END);
     if (NULL == daemon) {
         printf("http start failure\n");
         return 1;
