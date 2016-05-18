@@ -14,7 +14,7 @@
 #include "microhttpd.h"
 ```
 
-2. openssl (used for md5 generator)
+  2. openssl (used for md5 generator)
   - download
 ```sh
 sudo apt-get install libssl-dev 
@@ -23,10 +23,10 @@ sudo apt-get install libssl-dev
 ```c
 #include "openssl/md5.h"
 ```
-3. json (used for json string parsing)
+  3. json (used for json string parsing)
    - download: clone soure [here](https://github.com/zserge/jsmn)
    - install :
-   -   copy libjsmn.a to "libraries/json" folder  
+       >copy libjsmn.a to "libraries/json" folder  
        include "jsmn.h"
 
 ### Folder structure:
