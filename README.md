@@ -2,27 +2,29 @@
 ### Libraries
 
  1. libmicrohttpd (http server api)
- - download [lastest libmicrohttpd](http://ftpmirror.gnu.org/libmicrohttpd/libmicrohttpd-0.9.49.tar.gz)
+  - download [lastest libmicrohttpd](http://ftpmirror.gnu.org/libmicrohttpd/libmicrohttpd-0.9.49.tar.gz)
  - install:
 ```sh
 ./configure
  make
  sudo make install
 ```
- - usage:
+- usage:
 ```c
 #include "microhttpd.h"
 ```
- 2. openssl (used for md5 encryption)
- - download
+
+2. openssl (used for md5 generator)
+- download
 ```sh
 sudo apt-get install libssl-dev 
 ```
 - usage:
-> include "openssl/md5.h"
-
- 3. **json** (used for json string parsing)
- + download: clone soure [here](https://github.com/zserge/jsmn)
+```c
+#include "openssl/md5.h"
+```
+3. json (used for json string parsing)
+ - download: clone soure [here](https://github.com/zserge/jsmn)
  + install :
      copy libjsmn.a to "libraries/json" folder  
        include "jsmn.h"
