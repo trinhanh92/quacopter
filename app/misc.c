@@ -54,7 +54,7 @@ static int jsoneq(const char *json, jsmntok_t *tok, const char *s) {
 * @param[in]  json_string - json string input
 * @param[in]  len         - length of json string
 * @param[in]  key         - key to find value
-* @param[out] value_ret  - value return corresponding key
+* @param[out] value_ret   - value return corresponding key
 */
 int json_parser(const char *json_string, int len, const char *key, char *value_ret)
 {

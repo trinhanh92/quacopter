@@ -6,7 +6,7 @@
 
 #define PORT 8080
 
-#define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": \"%s\"}"
+#define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": %s}"
 #define RESP_DEV_INFO_FORMAT "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
 // HTTP method
 #define GET                  0
@@ -23,6 +23,9 @@
 #define NO_SUPPORT          -3
 #define NOT_FOUND			"<html><body>404 Not found.</body></html>"
 
+// define command
+#define CMD_DEV_INFO		"/api/info"
+#define CMD_DEV_CTRL		"/api/move"
 
 struct connection_data_s {
 	bool is_parsed;

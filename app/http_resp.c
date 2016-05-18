@@ -10,9 +10,12 @@
 #include <openssl/md5.h>
 
 /******************************************************************************
-*
-*
-*
+* @brief This function used to print request header
+* 
+* @param[in] cls
+* @param[in] kind
+* @param[in] key
+* @param[in] value
 *
 */
 static int
@@ -41,6 +44,11 @@ send_resp(struct MHD_Connection *connection,
     //                 MHD_RESPMEM_PERSISTENT);
     if (!response) 
         return MHD_NO;
+    if (MHD_HTTP_OK == status) {
+        MHD_add_response_header(response, "Content-Type", "application/json");
+    } else {
+        MHD_add_response_header(response, "Content-Type", "text/html");
+    }
     ret = MHD_queue_response (connection, status, response);
     MHD_destroy_response (response);
     return ret;
@@ -63,9 +71,9 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     char *sig_created;
     char raw_data[50] = {0};
 
-    if (0 == strcmp(url, "/api/move")) {            // case 1.2
+    if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
         // continue process
-    } else if (0 == strcmp(url, "/api/info")) {      // case 1.1
+    } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
         // strcpy(resp, "No support\r\n");
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
         return MHD_YES;
@@ -181,12 +189,9 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
             printf("post data available\n");
             status_code = MHD_HTTP_OK;
             // printf("data receive:  %.*s\n", *upload_data_size, upload_data);
-
             con_data->recv_data = (char *)upload_data;
             con_data->recv_data_len = *upload_data_size; 
             *upload_data_size = 0;
-
-            strcpy(resp_data, "hello post\n");
             return MHD_YES;
         } else {
             // handle post response here
@@ -200,8 +205,8 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
             printf("Response POST request: %.*s\n", strlen(resp_data), resp_data);
             return send_resp (connection, resp_data, status_code);
         }
-    } else {
-        status_code = MHD_HTTP_NOT_FOUND;
+    } else { 
+        /* No support GET method*/
         return send_resp (connection, NOT_FOUND, MHD_HTTP_NOT_FOUND);
     }
     return send_resp (connection, NOT_FOUND, MHD_HTTP_NOT_FOUND);
