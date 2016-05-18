@@ -1,0 +1,14 @@
+[-] Request valid:
+curl -H "Content-Type: application/json" -X POST -d '{"x":0,"y":0,"z":0, "sig":"aa99fb529f1576c335d1fe0c691ea778"}' http://localhost:8080/api/move
+
+[-] Request with invalid params:
+curl -H "Content-Type: application/json" -X POST -d '{"x":0,"z":0, "sig":"aa99fb529f1576c335d1fe0c691ea778"}' http://localhost:8080/api/move
+
+[-] Request with wrong signature:
+curl -H "Content-Type: application/json" -X POST -d '{"x":0,"y":0,z":0, "sig":"99fb529f1576c335d1fe0c691ea778"}' http://localhost:8080/api/move
+
+[-] Request with no support command (case 1.1)
+curl -H "Content-Type: application/json" -X POST -d '{"x":0,"y":0,"z":0, "sig":"aa99fb529f1576c335d1fe0c691ea778"}' http://localhost:8080/api/info
+
+[-] Request with no support method (GET)
+curl -X GET http://localhost:8080/api/info
