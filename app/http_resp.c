@@ -7,7 +7,6 @@
 #include "http_resp.h"
 #include "misc.h"
 #include "microhttpd.h"
-#include <openssl/md5.h>
 
 /******************************************************************************
 * @brief This function used to print request header
@@ -27,9 +26,13 @@ const char *value)
 }
 
 /******************************************************************************
+* @brief This function used to send response to client
+* 
+* @param[in]    connection - connection handle 
+* @param[in]    resp       - data buffer to send
+* @param[in]    status     - http status code to response
 *
-*
-*
+* @return       NHD_YES if success, NHD_NO for failure
 *
 */
 static int
@@ -55,9 +58,14 @@ send_resp(struct MHD_Connection *connection,
 }
 
 /******************************************************************************
+* @brief This function used to process request data 
+* 
+* @param[in]    url          - request command 
+* @param[in]    buffer       - request data 
+* @param[in]    buffer_len   - request data length
+* @param[in]    resp         - response data
 *
-*
-*
+* @return       http status code
 *
 */
 static int
@@ -76,11 +84,16 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
         // strcpy(resp, "No support\r\n");
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
-        return MHD_YES;
+        return MHD_HTTP_OK;
     } else {                                        // unsupport command
         strcpy(resp, NOT_FOUND);
-        return MHD_NO;
+        return MHD_HTTP_NOT_FOUND;
     }
+    // case post data null - response bad request
+    if(0 == buffer_len) {
+        strcpy(resp, BAD_REQUEST);
+        return MHD_HTTP_BAD_REQUEST;     
+    } 
     // parse json data from post request
     memset(x_axis, 0, sizeof x_axis);
     memset(y_axis, 0, sizeof y_axis);
@@ -95,7 +108,7 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         //TODO: Handle params invalid
         // strcpy(resp, "Invalid params\r\n");
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
-        return MHD_YES;
+        return MHD_HTTP_OK;
     }
     printf("x: %s\n", x_axis);
     printf("y: %s\n", y_axis);
@@ -111,12 +124,12 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         // strcpy(resp, "Invalid signature\r\n");
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_SIGNATURE, "null");
         //TODO: Handle invalid signature 
-        return MHD_YES;
+        return MHD_HTTP_OK;
     }
 
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
-    return MHD_YES;
+    return MHD_HTTP_OK;
 }
 
 /******************************************************************************
@@ -196,12 +209,7 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
         } else {
             // handle post response here
             printf("[POST] - Data: %.*s\n", con_data->recv_data_len, con_data->recv_data);
-            ret_val = process_post_data(url, con_data->recv_data, con_data->recv_data_len, resp_data);
-            if(MHD_YES == ret_val) {
-                status_code = MHD_HTTP_OK;
-            } else {
-                status_code = MHD_HTTP_NOT_FOUND;
-            }
+            status_code = process_post_data(url, con_data->recv_data, con_data->recv_data_len, resp_data);
             printf("Response POST request: %.*s\n", strlen(resp_data), resp_data);
             return send_resp (connection, resp_data, status_code);
         }
