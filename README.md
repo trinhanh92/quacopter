@@ -1,32 +1,52 @@
 # Quadcopter - Guides
 ### Libraries
 
- 1. libmicrohttpd (http server api)
-  - download [lastest libmicrohttpd](http://ftpmirror.gnu.org/libmicrohttpd/libmicrohttpd-0.9.49.tar.gz)
-  - install:
+ **libmicrohttpd** (http server api)  
+ 
+   Download [lastest libmicrohttpd](http://ftpmirror.gnu.org/libmicrohttpd/libmicrohttpd-0.9.49.tar.gz)  
+   Install:
+   
 ```sh
 ./configure
  make
  sudo make install
 ```
-  - usage:
+
+   Usage:
 ```c
 #include "microhttpd.h"
 ```
+   
 
-  2. openssl (used for md5 generator)
-  - download:
+----------
+
+
+**openssl** (used for md5 generator)
+
+   Download:
+   
+```sh 
   sudo apt-get install libssl-dev
-  - usage:
+```
+  
+  Usage:
+  
 ```c
-#include "openssl/md5.h"
+include <openssl/md5.h>
 ```
-3. json (used for json string parsing)
-   - download: clone soure [here](https://github.com/zserge/jsmn)
-   - install :
-   `copy libjsmn.a to "libraries/json" folder  
-   include "jsmn.h"`
-```
+
+
+----------
+
+**json** (used for json string parsing)
+
+  Download: clone soure [here](https://github.com/zserge/jsmn)
+  Usage:
+      
+	 make
+	   copy libjsmn.a to "libraries/json" folder  
+	   include "jsmn.h"
+   
 ### Folder structure:
 ```c
 --> app/            // main application  
