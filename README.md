@@ -41,6 +41,7 @@
 - open other terminal window
 - try to use testcase in file `testcase_curl.txt`
 - Note that: Change 'localhost' by your remote device'sIP
+
 ###Note:
 Port forwarding 80 to 8080:
 >sudo iptables -t nat -A OUTPUT -o lo -p tcp --dport 80 -j REDIRECT --to-port 8080
