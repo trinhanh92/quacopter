@@ -41,11 +41,13 @@ include <openssl/md5.h>
 **json** (used for json string parsing)
 
   Download: clone soure [here](https://github.com/zserge/jsmn)
-  Usage:
-      
-	 make
+    
+  Usage:   
+		 
+	   make
 	   copy libjsmn.a to "libraries/json" folder  
-	   include "jsmn.h"
+	   include "jsmn.h"    
+
    
 ### Folder structure:
 ```c
