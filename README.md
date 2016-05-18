@@ -29,11 +29,11 @@ sudo apt-get install libssl-dev
 
 ### Folder structure:
 
->--> app/                		// main application
---> libraries/          		// contain libraries used for app
-    		    --> json/           // json lib
---> README.md           // this file - project guide
---> testcase_curl.txt 
+>--> app/                              // main application
+--> libraries/                        // contain libraries used for app
+                  --> json/            // json lib
+--> README.md                  // this file - project guide
+--> testcase_curl.txt           // testcase
 
 ### Build and Run:
  >cd app/
@@ -47,7 +47,10 @@ sudo apt-get install libssl-dev
 
 ###Note:
 Port forwarding 80 to 8080:
->sudo iptables -t nat -A OUTPUT -o lo -p tcp --dport 80 -j REDIRECT --to-port 8080
-
+```c
+sudo iptables -t nat -A OUTPUT -o lo -p tcp --dport 80 -j REDIRECT --to-port 8080
+```
 Run following command to auto port forwarding on boot:
->sudo sh -c "iptables-save > /etc/iptables.rules"
+```c
+sudo sh -c "iptables-save > /etc/iptables.rules"
+```
