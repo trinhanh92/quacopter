@@ -28,12 +28,13 @@ sudo apt-get install libssl-dev
        include "jsmn.h"
 
 ### Folder structure:
-
->--> app/                              // main application  
---> libraries/                        // contain libraries used for app  
-                  --> json/            // json lib  
---> README.md                  // this file - project guide  
+```c
+--> app/            // main application  
+--> libraries/      // contain libraries used for app  
+    --> json/       // json lib  
+--> README.md       // this file - project guide  
 --> testcase_curl.txt           // testcase  
+```
 
 ### Build and Run:
 
