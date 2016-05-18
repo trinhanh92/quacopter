@@ -36,10 +36,12 @@ sudo apt-get install libssl-dev
 --> testcase_curl.txt           // testcase  
 
 ### Build and Run:
- >cd app/
- make
- ./quadcopter
- 
+
+```sh
+cd app/
+make
+./quadcopter
+```
 ###Test with cURL:
 - open other terminal window
 - try to use testcase in file `testcase_curl.txt`
