@@ -24,16 +24,16 @@ sudo apt-get install libssl-dev
  3. **json** (used for json string parsing)
  + download: clone soure [here](https://github.com/zserge/jsmn)
  + install :
-    - copy libjsmn.a to "libraries/json" folder  
-    include "jsmn.h"
+     copy libjsmn.a to "libraries/json" folder  
+       include "jsmn.h"
 
 ### Folder structure:
 
->--> app/                              // main application
---> libraries/                        // contain libraries used for app
-                  --> json/            // json lib
---> README.md                  // this file - project guide
---> testcase_curl.txt           // testcase
+>--> app/                              // main application  
+--> libraries/                        // contain libraries used for app  
+                  --> json/            // json lib  
+--> README.md                  // this file - project guide  
+--> testcase_curl.txt           // testcase  
 
 ### Build and Run:
  >cd app/
