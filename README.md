@@ -42,10 +42,16 @@
 
  - Download: clone soure [here](https://github.com/zserge/jsmn)
     
- - Usage:  
+ - Install:  
 
 ```sh
+ cd jsmn/
  make
+```
+
+ - Usage:  
+
+```c
  copy libjsmn.a to "libraries/json" folder
  #include "jsmn.h"
 ```
