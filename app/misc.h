@@ -3,6 +3,14 @@
 
 #define SERCRET_KEY "drone_hung_hue@uit.edu.vn"
 
+/* data from client request */
+typdef struct req_data_s {
+	int x;				// value of x
+	int y;				// value of y
+	int z;				// value of z
+	char sig[33];		// signature in MD5
+} req_data_t;
+
 /******************************************************************************
 * @brief This function used to encrypt a plain text o MD5 
 *   

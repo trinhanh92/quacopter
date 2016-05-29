@@ -78,6 +78,7 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     char sig_recv[50] = {0};
     char *sig_created;
     char raw_data[50] = {0};
+    req_data_t req_data;
 
     if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
         // continue process
@@ -99,10 +100,11 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     memset(y_axis, 0, sizeof y_axis);
     memset(z_axis, 0, sizeof z_axis);
     memset(sig_recv, 0, sizeof sig_recv);
-    ret_val = json_parser(buffer, buffer_len, "x", x_axis);
-    ret_val += json_parser(buffer, buffer_len, "y", y_axis);
-    ret_val += json_parser(buffer, buffer_len, "z", z_axis);
-    ret_val += json_parser(buffer, buffer_len, "sig", sig_recv);
+    // ret_val = json_parser(buffer, buffer_len, "x", x_axis);
+    // ret_val += json_parser(buffer, buffer_len, "y", y_axis);
+    // ret_val += json_parser(buffer, buffer_len, "z", z_axis);
+    // ret_val += json_parser(buffer, buffer_len, "sig", sig_recv);
+    ret_val = parse_request(buffer, buffer_len, &req_data);
     if (ret_val < 0) {
         printf("[POST] - Request params invalid\n");
         //TODO: Handle params invalid

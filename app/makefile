@@ -1,11 +1,9 @@
 #flag
 INCLUDE =   -I./ \
-			-I../libraries/json/
 
-LIBS_PATH = -L../libraries/json/
 
-CFLAGS = -Wall -g $(INCLUDE) $(LIBS_PATH)
-LIBS = -lmicrohttpd -lcrypto -ljsmn 
+CFLAGS = -Wall -g $(INCLUDE)
+LIBS = -lmicrohttpd -lcrypto 
 OBJS = main.o misc.o http_resp.o
 
 #tool
