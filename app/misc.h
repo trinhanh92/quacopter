@@ -29,5 +29,5 @@ char *str2md5(const char *str, int length);
 * @param[out] value_ret  - value return corresponding key
 */
 int
-parse_request(char *request, int req_len, req_data_t *data);
+parse_request(char *request, int req_len, char *key, char *value);
 #endif

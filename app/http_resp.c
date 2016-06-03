@@ -72,6 +72,11 @@ static int
 process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
 {
     int ret_val;
+    char x_val[4] = {0}; 
+    char y_val[4] = {0}; 
+    char z_val[4] = {0}; 
+    char sig_recv[33] = {0};
+
     char *sig_created;
     char raw_data[50] = {0};
     req_data_t req_data;
@@ -86,21 +91,51 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         strcpy(resp, NOT_FOUND);
         return MHD_HTTP_NOT_FOUND;
     }
+
     // case post data null - response bad request
     if(0 == buffer_len) {
         strcpy(resp, BAD_REQUEST);
         return MHD_HTTP_BAD_REQUEST;     
     } 
-    // parse json data from post request
-    ret_val = parse_request(buffer, buffer_len, &req_data);
-    // invalid parameter 
+    // parse data from post request
+
+    // find x value
+    ret_val = parse_request(buffer, buffer_len, "x", x_val);
     if (ret_val < 0) {
-        printf("[POST] - Request params invalid\n");
-        //TODO: Handle params invalid
-        // strcpy(resp, "Invalid params\r\n");
+        printf("[POST] - Request param X invalid\n");
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
         return MHD_HTTP_OK;
     }
+    // find y value
+    ret_val = parse_request(buffer, buffer_len, "y", y_val);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Y invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
+    // find z value
+    ret_val = parse_request(buffer, buffer_len, "z", z_val);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Z invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
+    // find sig value
+    ret_val = parse_request(buffer, buffer_len, "sig", sig_recv);
+    if (ret_val < 0) {
+        printf("[POST] - Request param SIG invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
+    // show data
+    req_data.x = atoi(x_val);
+    req_data.y = atoi(y_val);
+    req_data.z = atoi(z_val);
+    strncpy(req_data.sig, sig_recv, sizeof sig_recv);
+
     printf("x: %d\n", req_data.x);
     printf("y: %d\n", req_data.y);
     printf("z: %d\n", req_data.z);
