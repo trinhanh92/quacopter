@@ -5,9 +5,63 @@
 #include <openssl/md5.h>
 
 /******************************************************************************
-* @brief This function used to encrypt a plain text string to MD5 
+* @brief Convert 2 byte data to single byte array
 *   
-* @param[in] str - string buffer
+* @param[in]  inp_num    - input number
+* @param[out] byte_arr   - output array
+* @return     None
+*/
+void
+short2byte(i16_t inp_num, u8_t *byte_arr)
+{
+    byte_arr[0] = ((inp_num >> 8) & 0xFF);
+    byte_arr[1] = ((inp_num) & 0xFF);
+    // byte_arr[0] = 0;
+    // byte_arr[1] = 100;
+    printf("%04X | %02X %02X\n", inp_num, byte_arr[0], byte_arr[1]);
+}
+
+
+/******************************************************************************
+* @brief Package data to send to SPI slave
+*   
+* @param[in]  req_data      - request data
+* @param[out] send_data     - send data buffer in hex
+* @param[in]  send_data_len - length of send data in bytes
+* @return     None
+*/
+void
+spi_data_to_send(req_data_t req_data, u8_t *send_data, int send_data_len)
+{
+    int i;
+    u8_t x_buf[2];
+    u8_t y_buf[2];
+    u8_t z_buf[2];
+
+    // convert number to single byte array
+    short2byte(req_data.x, x_buf);
+    short2byte(req_data.y, y_buf);
+    short2byte(req_data.z, z_buf);
+
+    // join data into a output array to send througn SPI
+    memset(send_data, 0, send_data_len);
+    memcpy(send_data, x_buf, sizeof x_buf);
+    memcpy(send_data + sizeof x_buf, y_buf, sizeof y_buf);
+    memcpy(send_data + sizeof x_buf + sizeof y_buf, z_buf, sizeof z_buf);
+
+    // show result
+    printf("\nspi send data: ");
+    for (i = 0; i < send_data_len; i++) {
+        printf("%02X ", send_data[i]);
+    }
+    printf("\n");
+
+}
+
+/******************************************************************************
+* @brief Encrypt a plain text string to MD5 
+*   
+* @param[in] str    - string buffer
 * @param[in] lenght - string buffer length
 * @return    MD5 string
 */
@@ -41,11 +95,13 @@ char *str2md5(const char *str, int length)
 
 
 /******************************************************************************
-* @brief Parse client request and get parameters 
-*   
-* @param[in] str - string buffer
-* @param[in] lenght - string buffer length
-* @return    MD5 string
+* @brief Get value request string with specific key
+*
+* @param[in]  request     - post data request strin 
+* @param[in]  req_len     - length of request string
+* @param[in]  key         - key to find value
+* @param[out] value       - value return corresponding key
+* @return     0 if success, other for fail
 */
 int
 parse_request(char *request, int req_len, char *key, char *value)

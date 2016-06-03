@@ -7,11 +7,18 @@
 #include <microhttpd.h>
 #include "http_resp.h"
 #include "misc.h"
+#include <wiringPiSPI.h>
+
 
 int 
 main ()
 {
     struct MHD_Daemon *daemon;
+    int spi_fd;                   // spi file description
+
+    // initialize spi master
+    spi_fd = wiringPiSPISetup(SPI_CS_CHANNEL, SPI_CLK);
+
     daemon = MHD_start_daemon (MHD_USE_SELECT_INTERNALLY, PORT, NULL, NULL,
                     &http_resp_handler, NULL,
                     MHD_OPTION_NOTIFY_COMPLETED, &request_completed,

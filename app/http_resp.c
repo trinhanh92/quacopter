@@ -7,9 +7,10 @@
 #include "http_resp.h"
 #include "misc.h"
 #include "microhttpd.h"
+#include <wiringPiSPI.h>
 
 /******************************************************************************
-* @brief This function used to print request header
+* @brief Print request header
 * 
 * @param[in] cls
 * @param[in] kind
@@ -26,7 +27,7 @@ const char *value)
 }
 
 /******************************************************************************
-* @brief This function used to send response to client
+* @brief Send response to client
 * 
 * @param[in]    connection - connection handle 
 * @param[in]    resp       - data buffer to send
@@ -43,8 +44,6 @@ send_resp(struct MHD_Connection *connection,
     struct MHD_Response *response;
     response = MHD_create_response_from_buffer (strlen (resp), resp,
                     MHD_RESPMEM_MUST_COPY);
-    // response = MHD_create_response_from_buffer (2, (void*) resp,
-    //                 MHD_RESPMEM_PERSISTENT);
     if (!response) 
         return MHD_NO;
     if (MHD_HTTP_OK == status) {
@@ -58,7 +57,7 @@ send_resp(struct MHD_Connection *connection,
 }
 
 /******************************************************************************
-* @brief This function used to process request data 
+* @brief Process request data 
 * 
 * @param[in]    url          - request command 
 * @param[in]    buffer       - request data 
@@ -79,12 +78,13 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
 
     char *sig_created;
     char raw_data[50] = {0};
+    u8_t spi_data[6];
+
     req_data_t req_data;
 
     if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
         // continue process
     } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
-        // strcpy(resp, "No support\r\n");
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
         return MHD_HTTP_OK;
     } else {                                        // unsupport command
@@ -136,10 +136,6 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     req_data.z = atoi(z_val);
     strncpy(req_data.sig, sig_recv, sizeof sig_recv);
 
-    printf("x: %d\n", req_data.x);
-    printf("y: %d\n", req_data.y);
-    printf("z: %d\n", req_data.z);
-    printf("sig: %s\n", req_data.sig);
     // compare signature
     snprintf(raw_data, sizeof (raw_data), "%d%d%d%s", req_data.x,
                          req_data.y, req_data.z, SERCRET_KEY);
@@ -154,13 +150,18 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_OK;
     }
 
+    // package data to spi slave
+    spi_data_to_send(req_data, spi_data, sizeof spi_data);
+    // send data
+    wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, sizeof spi_data);
+
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
     return MHD_HTTP_OK;
 }
 
 /******************************************************************************
-*
+* @brief Callback function when request data received complete, free memory
 *
 *
 *
@@ -174,8 +175,6 @@ request_completed (void *cls, struct MHD_Connection *connection,
         return;
     if (con_info->connectiontype == POST) {
         printf("post data completed\n");
-        // free (con_info->receive_data);
-        // send_resp (connection, "hello wol", MHD_HTTP_OK);
     } else {
         printf("get data completed\n");
     }
@@ -185,7 +184,7 @@ request_completed (void *cls, struct MHD_Connection *connection,
 
 
 /******************************************************************************
-*
+* @brief Callback functioon when have request from client
 *
 *
 *
@@ -223,7 +222,7 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
     if (0 == strcmp(method, "POST")) {
        struct connection_data_s *con_data = *con_cls;
 
-        // *upload_data_size = zere mean all data have been received
+        // *upload_data_size = zero mean all data have been received
         if (*upload_data_size != 0) {
             printf("post data available\n");
             status_code = MHD_HTTP_OK;
