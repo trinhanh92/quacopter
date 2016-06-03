@@ -53,6 +53,7 @@ parse_request(char *request, int req_len, req_data_t *data)
     char *and_ptr;
     char *key_ptr;
     char temp[33] = {0};
+    int  value_len;
     char *temp_ptr = request;
     // search 'x' 
     key_ptr = strstr(temp_ptr, "x=");
@@ -61,19 +62,23 @@ parse_request(char *request, int req_len, req_data_t *data)
     }
     // search '&'
     and_ptr = strstr(temp_ptr, "&");
-    if(NUL == and_ptr) {
+    if(NULL == and_ptr) {
         return -1;
     }
     // get x value
-    if ((and_ptr - key_ptr) > 0) {
+    value_len = (and_ptr - key_ptr);
+    if (value_len > 0) {
+        printf("value len: %d\n", value_len);
         memset(temp, 0, sizeof temp);
-        strncpy(temp, sizeof temp, key_ptr);
+        strncpy(temp, key_ptr + 1, sizeof value_len);
         data->x = atoi(temp);
     } else {
         return -1;
     }
 
-    temp_ptr += and_ptr; 
+    printf("gotta X: %d\n", data->x);
+    temp_ptr = and_ptr + 1;
+
     // search 'y' 
     key_ptr = strstr(temp_ptr, "y=");
     if (NULL == key_ptr) {
@@ -81,19 +86,21 @@ parse_request(char *request, int req_len, req_data_t *data)
     }
     // search '&'
     and_ptr = strstr(temp_ptr, "&");
-    if(NUL == and_ptr) {
+    if(NULL == and_ptr) {
         return -1;
     }
     // get y value
-    if ((and_ptr - key_ptr) > 0) {
+    value_len = (and_ptr - key_ptr - 1);
+    if (value_len > 0) {
         memset(temp, 0, sizeof temp);
-        strncpy(temp, sizeof temp, key_ptr);
+        strncpy(temp, key_ptr + 1, sizeof value_len);
         data->y = atoi(temp);
     } else {
         return -1;
     }
 
-    temp_ptr += and_ptr; 
+    printf("gotta Y: %d\n", data->y);
+    temp_ptr = and_ptr + 1; 
     // search 'z' 
     key_ptr = strstr(temp_ptr, "z=");
     if (NULL == key_ptr) {
@@ -101,31 +108,35 @@ parse_request(char *request, int req_len, req_data_t *data)
     }
     // search '&'
     and_ptr = strstr(temp_ptr, "&");
-    if(NUL == and_ptr) {
+    if(NULL == and_ptr) {
         return -1;
     }
     // get z value
-    if ((and_ptr - key_ptr) > 0) {
+    value_len = (and_ptr - key_ptr - 1);
+    if (value_len > 0) {
         memset(temp, 0, sizeof temp);
-        strncpy(temp, sizeof temp, key_ptr);
+        strncpy(temp, key_ptr + 1, sizeof value_len);
         data->z = atoi(temp);
     } else {
         return -1;
     }
 
-    temp_ptr += and_ptr; 
+    printf("gotta Z: %d\n", data->z);
+    temp_ptr = and_ptr; 
     // search 'sig' 
     key_ptr = strstr(temp_ptr, "x=");
     if (NULL == key_ptr) {
        return -1; 
     }
     // get sig value
-    if ((req_len - (and_ptr - request)) > 0) {
+    value_len = (req_len - (key_ptr - request + 1));
+    if (value_len > 0) {
         memset(temp, 0, sizeof temp);
-        strncpy(temp, sizeof temp, key_ptr);
-        strncpy(data->sig, 32, temp);
+        strncpy(temp, key_ptr + 1, sizeof value_len);
+        strncpy(data->sig, temp, sizeof temp);
     } else {
         return -1;
     }
+    printf("gotta sig: %s\n", data->sig);
     return 0;
 }

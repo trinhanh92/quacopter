@@ -72,10 +72,6 @@ static int
 process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
 {
     int ret_val;
-    char x_axis[10] = {0};
-    char y_axis[10] = {0};
-    char z_axis[10] = {0};
-    char sig_recv[50] = {0};
     char *sig_created;
     char raw_data[50] = {0};
     req_data_t req_data;
@@ -96,15 +92,8 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_BAD_REQUEST;     
     } 
     // parse json data from post request
-    memset(x_axis, 0, sizeof x_axis);
-    memset(y_axis, 0, sizeof y_axis);
-    memset(z_axis, 0, sizeof z_axis);
-    memset(sig_recv, 0, sizeof sig_recv);
-    // ret_val = json_parser(buffer, buffer_len, "x", x_axis);
-    // ret_val += json_parser(buffer, buffer_len, "y", y_axis);
-    // ret_val += json_parser(buffer, buffer_len, "z", z_axis);
-    // ret_val += json_parser(buffer, buffer_len, "sig", sig_recv);
     ret_val = parse_request(buffer, buffer_len, &req_data);
+    // invalid parameter 
     if (ret_val < 0) {
         printf("[POST] - Request params invalid\n");
         //TODO: Handle params invalid
@@ -112,15 +101,16 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
         return MHD_HTTP_OK;
     }
-    printf("x: %s\n", x_axis);
-    printf("y: %s\n", y_axis);
-    printf("z: %s\n", z_axis);
-    printf("sig: %s\n", sig_recv);
+    printf("x: %d\n", req_data.x);
+    printf("y: %d\n", req_data.y);
+    printf("z: %d\n", req_data.z);
+    printf("sig: %s\n", req_data.sig);
     // compare signature
-    snprintf(raw_data, sizeof (raw_data), "%s%s%s%s", x_axis, y_axis, z_axis, SERCRET_KEY);
+    snprintf(raw_data, sizeof (raw_data), "%d%d%d%s", req_data.x,
+                         req_data.y, req_data.z, SERCRET_KEY);
     sig_created = str2md5(raw_data, strlen (raw_data));
     printf("signature created: %s\n", sig_created);
-    if (0 != strcmp(sig_created, sig_recv)) {
+    if (0 != strcmp(sig_created, req_data.sig)) {
         // invalid signature
         printf("[POST] - Invalid signature\n");
         // strcpy(resp, "Invalid signature\r\n");
@@ -171,7 +161,6 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
                         const char *version, const char *upload_data,
                         size_t *upload_data_size, void **con_cls)
 {
-    int  ret_val;
     int  status_code;
     char resp_data[MAX_RESP_BUFF_SIZE] = {0};
 
