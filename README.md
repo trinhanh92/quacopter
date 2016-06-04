@@ -81,7 +81,7 @@ make
 ###Note:
 - Port forwarding 80 to 8080:
 ```c
-sudo iptables -t nat -A OUTPUT -o lo -p tcp --dport 80 -j REDIRECT --to-port 8080
+sudo iptables -A PREROUTING -t nat -p tcp --dport 80 -j REDIRECT --to-port 8080
 ```
 - Run following command to auto port forwarding on boot:
 ```c
