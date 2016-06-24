@@ -7,9 +7,10 @@
 #include "http_resp.h"
 #include "misc.h"
 #include "microhttpd.h"
+#include <wiringPiSPI.h>
 
 /******************************************************************************
-* @brief This function used to print request header
+* @brief Print request header
 * 
 * @param[in] cls
 * @param[in] kind
@@ -26,7 +27,7 @@ const char *value)
 }
 
 /******************************************************************************
-* @brief This function used to send response to client
+* @brief Send response to client
 * 
 * @param[in]    connection - connection handle 
 * @param[in]    resp       - data buffer to send
@@ -43,8 +44,6 @@ send_resp(struct MHD_Connection *connection,
     struct MHD_Response *response;
     response = MHD_create_response_from_buffer (strlen (resp), resp,
                     MHD_RESPMEM_MUST_COPY);
-    // response = MHD_create_response_from_buffer (2, (void*) resp,
-    //                 MHD_RESPMEM_PERSISTENT);
     if (!response) 
         return MHD_NO;
     if (MHD_HTTP_OK == status) {
@@ -58,7 +57,7 @@ send_resp(struct MHD_Connection *connection,
 }
 
 /******************************************************************************
-* @brief This function used to process request data 
+* @brief Process request data 
 * 
 * @param[in]    url          - request command 
 * @param[in]    buffer       - request data 
@@ -72,55 +71,81 @@ static int
 process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
 {
     int ret_val;
-    char x_axis[10] = {0};
-    char y_axis[10] = {0};
-    char z_axis[10] = {0};
-    char sig_recv[50] = {0};
+    char x_val[5] = {0}; 
+    char y_val[5] = {0}; 
+    char z_val[5] = {0}; 
+    char sig_recv[33] = {0};
+
     char *sig_created;
     char raw_data[50] = {0};
+    u8_t spi_data[6];
+
     req_data_t req_data;
 
     if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
         // continue process
     } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
-        // strcpy(resp, "No support\r\n");
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
         return MHD_HTTP_OK;
     } else {                                        // unsupport command
         strcpy(resp, NOT_FOUND);
         return MHD_HTTP_NOT_FOUND;
     }
+
     // case post data null - response bad request
     if(0 == buffer_len) {
         strcpy(resp, BAD_REQUEST);
         return MHD_HTTP_BAD_REQUEST;     
     } 
-    // parse json data from post request
-    memset(x_axis, 0, sizeof x_axis);
-    memset(y_axis, 0, sizeof y_axis);
-    memset(z_axis, 0, sizeof z_axis);
-    memset(sig_recv, 0, sizeof sig_recv);
-    // ret_val = json_parser(buffer, buffer_len, "x", x_axis);
-    // ret_val += json_parser(buffer, buffer_len, "y", y_axis);
-    // ret_val += json_parser(buffer, buffer_len, "z", z_axis);
-    // ret_val += json_parser(buffer, buffer_len, "sig", sig_recv);
-    ret_val = parse_request(buffer, buffer_len, &req_data);
+    // parse data from post request
+
+    // find x value
+    ret_val = parse_request(buffer, buffer_len, "x", x_val);
     if (ret_val < 0) {
-        printf("[POST] - Request params invalid\n");
-        //TODO: Handle params invalid
-        // strcpy(resp, "Invalid params\r\n");
+        printf("[POST] - Request param X invalid\n");
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
         return MHD_HTTP_OK;
     }
-    printf("x: %s\n", x_axis);
-    printf("y: %s\n", y_axis);
-    printf("z: %s\n", z_axis);
-    printf("sig: %s\n", sig_recv);
+    // find y value
+    ret_val = parse_request(buffer, buffer_len, "y", y_val);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Y invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
+    // find z value
+    ret_val = parse_request(buffer, buffer_len, "z", z_val);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Z invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
+    // find sig value
+    ret_val = parse_request(buffer, buffer_len, "sig", sig_recv);
+    if (ret_val < 0) {
+        printf("[POST] - Request param SIG invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
+    // show data
+    req_data.x = atoi(x_val);
+    req_data.y = atoi(y_val);
+    req_data.z = atoi(z_val);
+    strncpy(req_data.sig, sig_recv, sizeof sig_recv);
+	
+	// printf("x: %d, y: %d, z: %d \n", req_data.x, req_data.y, req_data.z);
+
     // compare signature
-    snprintf(raw_data, sizeof (raw_data), "%s%s%s%s", x_axis, y_axis, z_axis, SERCRET_KEY);
+    snprintf(raw_data, sizeof (raw_data), "%d%d%d%s", req_data.x,
+                         req_data.y, req_data.z, SERCRET_KEY);
+    printf("raw_data: %s\n", raw_data);
+
     sig_created = str2md5(raw_data, strlen (raw_data));
     printf("signature created: %s\n", sig_created);
-    if (0 != strcmp(sig_created, sig_recv)) {
+    if (0 != strcmp(sig_created, req_data.sig)) {
         // invalid signature
         printf("[POST] - Invalid signature\n");
         // strcpy(resp, "Invalid signature\r\n");
@@ -129,13 +154,18 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_OK;
     }
 
+    // package data to spi slave
+    spi_data_to_send(req_data, spi_data, sizeof spi_data);
+    // send data
+    wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, sizeof spi_data);
+
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
     return MHD_HTTP_OK;
 }
 
 /******************************************************************************
-*
+* @brief Callback function when request data received complete, free memory
 *
 *
 *
@@ -149,8 +179,6 @@ request_completed (void *cls, struct MHD_Connection *connection,
         return;
     if (con_info->connectiontype == POST) {
         printf("post data completed\n");
-        // free (con_info->receive_data);
-        // send_resp (connection, "hello wol", MHD_HTTP_OK);
     } else {
         printf("get data completed\n");
     }
@@ -160,7 +188,7 @@ request_completed (void *cls, struct MHD_Connection *connection,
 
 
 /******************************************************************************
-*
+* @brief Callback functioon when have request from client
 *
 *
 *
@@ -171,7 +199,6 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
                         const char *version, const char *upload_data,
                         size_t *upload_data_size, void **con_cls)
 {
-    int  ret_val;
     int  status_code;
     char resp_data[MAX_RESP_BUFF_SIZE] = {0};
 
@@ -199,7 +226,7 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
     if (0 == strcmp(method, "POST")) {
        struct connection_data_s *con_data = *con_cls;
 
-        // *upload_data_size = zere mean all data have been received
+        // *upload_data_size = zero mean all data have been received
         if (*upload_data_size != 0) {
             printf("post data available\n");
             status_code = MHD_HTTP_OK;

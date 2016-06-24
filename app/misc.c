@@ -5,9 +5,63 @@
 #include <openssl/md5.h>
 
 /******************************************************************************
-* @brief This function used to encrypt a plain text string to MD5 
+* @brief Convert 2 byte data to single byte array
 *   
-* @param[in] str - string buffer
+* @param[in]  inp_num    - input number
+* @param[out] byte_arr   - output array
+* @return     None
+*/
+void
+short2byte(i16_t inp_num, u8_t *byte_arr)
+{
+    byte_arr[0] = ((inp_num >> 8) & 0xFF);
+    byte_arr[1] = ((inp_num) & 0xFF);
+    // byte_arr[0] = 0;
+    // byte_arr[1] = 100;
+    // printf("%04X | %02X %02X\n", inp_num, byte_arr[0], byte_arr[1]);
+}
+
+
+/******************************************************************************
+* @brief Package data to send to SPI slave
+*   
+* @param[in]  req_data      - request data
+* @param[out] send_data     - send data buffer in hex
+* @param[in]  send_data_len - length of send data in bytes
+* @return     None
+*/
+void
+spi_data_to_send(req_data_t req_data, u8_t *send_data, int send_data_len)
+{
+    int i;
+    u8_t x_buf[2];
+    u8_t y_buf[2];
+    u8_t z_buf[2];
+
+    // convert number to single byte array
+    short2byte(req_data.x, x_buf);
+    short2byte(req_data.y, y_buf);
+    short2byte(req_data.z, z_buf);
+
+    // join data into a output array to send througn SPI
+    memset(send_data, 0, send_data_len);
+    memcpy(send_data, x_buf, sizeof x_buf);
+    memcpy(send_data + sizeof x_buf, y_buf, sizeof y_buf);
+    memcpy(send_data + sizeof x_buf + sizeof y_buf, z_buf, sizeof z_buf);
+
+    // show result
+    printf("\nspi send data: ");
+    for (i = 0; i < send_data_len; i++) {
+        printf("%02X ", send_data[i]);
+    }
+    printf("\n");
+
+}
+
+/******************************************************************************
+* @brief Encrypt a plain text string to MD5 
+*   
+* @param[in] str    - string buffer
 * @param[in] lenght - string buffer length
 * @return    MD5 string
 */
@@ -41,91 +95,52 @@ char *str2md5(const char *str, int length)
 
 
 /******************************************************************************
-* @brief Parse client request and get parameters 
-*   
-* @param[in] str - string buffer
-* @param[in] lenght - string buffer length
-* @return    MD5 string
+* @brief Get value request string with specific key
+*
+* @param[in]  request     - post data request strin 
+* @param[in]  req_len     - length of request string
+* @param[in]  key         - key to find value
+* @param[out] value       - value return corresponding key
+* @return     0 if success, other for fail
 */
 int
-parse_request(char *request, int req_len, req_data_t *data)
+parse_request(char *request, int req_len, char *key, char *value)
 {
-    char *and_ptr;
-    char *key_ptr;
-    char temp[33] = {0};
+    char *and_ptr = NULL;
+    char *key_ptr = NULL;
+    int  value_len = 0;
     char *temp_ptr = request;
-    // search 'x' 
-    key_ptr = strstr(temp_ptr, "x=");
-    if (NULL == key_ptr) {
-       return -1; 
-    }
-    // search '&'
-    and_ptr = strstr(temp_ptr, "&");
-    if(NUL == and_ptr) {
+
+    // string is NULL
+    if(NULL == request)
+    {
         return -1;
     }
-    // get x value
-    if ((and_ptr - key_ptr) > 0) {
-        memset(temp, 0, sizeof temp);
-        strncpy(temp, sizeof temp, key_ptr);
-        data->x = atoi(temp);
+
+    if (0 == strcmp(key, "sig")) {
+        key_ptr = strstr(temp_ptr, key);    // search 'sig' position
+        if (NULL == key_ptr) {
+            return -1;
+        }
+        value_len = (req_len - (key_ptr - temp_ptr) - strlen(key) - 1); // minus len of key and an '=' char
+
+    } else if ((0 == strcmp(key, "x")) || 
+               (0 == strcmp(key, "y")) || 
+               (0 == strcmp(key, "z"))) {
+        key_ptr = strstr(temp_ptr, key);    // search key position
+    
+        if (NULL == key_ptr) {
+            return -1;                      // have no key in string
+        }
+        and_ptr =  strstr(key_ptr, "&");    // search '&' position
+        value_len = and_ptr - key_ptr - strlen(key) - 1;                // minus len of key and an '='
+
     } else {
         return -1;
     }
 
-    temp_ptr += and_ptr; 
-    // search 'y' 
-    key_ptr = strstr(temp_ptr, "y=");
-    if (NULL == key_ptr) {
-       return -1; 
-    }
-    // search '&'
-    and_ptr = strstr(temp_ptr, "&");
-    if(NUL == and_ptr) {
-        return -1;
-    }
-    // get y value
-    if ((and_ptr - key_ptr) > 0) {
-        memset(temp, 0, sizeof temp);
-        strncpy(temp, sizeof temp, key_ptr);
-        data->y = atoi(temp);
-    } else {
-        return -1;
-    }
-
-    temp_ptr += and_ptr; 
-    // search 'z' 
-    key_ptr = strstr(temp_ptr, "z=");
-    if (NULL == key_ptr) {
-       return -1; 
-    }
-    // search '&'
-    and_ptr = strstr(temp_ptr, "&");
-    if(NUL == and_ptr) {
-        return -1;
-    }
-    // get z value
-    if ((and_ptr - key_ptr) > 0) {
-        memset(temp, 0, sizeof temp);
-        strncpy(temp, sizeof temp, key_ptr);
-        data->z = atoi(temp);
-    } else {
-        return -1;
-    }
-
-    temp_ptr += and_ptr; 
-    // search 'sig' 
-    key_ptr = strstr(temp_ptr, "x=");
-    if (NULL == key_ptr) {
-       return -1; 
-    }
-    // get sig value
-    if ((req_len - (and_ptr - request)) > 0) {
-        memset(temp, 0, sizeof temp);
-        strncpy(temp, sizeof temp, key_ptr);
-        strncpy(data->sig, 32, temp);
-    } else {
-        return -1;
-    }
+    strncpy(value, key_ptr + strlen(key) + 1, value_len);   // + len of key and +1 for '='
+    printf("value of %s is: %s\n", key, value);
     return 0;
+
 }
