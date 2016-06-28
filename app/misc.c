@@ -18,7 +18,6 @@ short2byte(i16_t inp_num, u8_t *byte_arr)
     byte_arr[1] = ((inp_num) & 0xFF);
     // byte_arr[0] = 0;
     // byte_arr[1] = 100;
-    // printf("%04X | %02X %02X\n", inp_num, byte_arr[0], byte_arr[1]);
 }
 
 

@@ -134,14 +134,10 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
     req_data.y = atoi(y_val);
     req_data.z = atoi(z_val);
     strncpy(req_data.sig, sig_recv, sizeof sig_recv);
-	
-	// printf("x: %d, y: %d, z: %d \n", req_data.x, req_data.y, req_data.z);
 
     // compare signature
     snprintf(raw_data, sizeof (raw_data), "%d%d%d%s", req_data.x,
                          req_data.y, req_data.z, SERCRET_KEY);
-    // printf("raw_data: %s\n", raw_data);
-
     sig_created = str2md5(raw_data, strlen (raw_data));
     printf("signature created: %s\n", sig_created);
     if (0 != strcmp(sig_created, req_data.sig)) {
