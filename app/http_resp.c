@@ -22,7 +22,7 @@ static int
 print_out_key (void *cls, enum MHD_ValueKind kind, const char *key,
 const char *value)
 {
-    printf ("%s: %s\n", key, value);
+    // printf ("%s: %s\n", key, value);
     return MHD_YES;
 }
 
@@ -68,7 +68,7 @@ send_resp(struct MHD_Connection *connection,
 *
 */
 static int
-process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
+process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
 {
     int ret_val;
     char x_val[5] = {0}; 
@@ -79,7 +79,6 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     char *sig_created;
     char raw_data[50] = {0};
     u8_t spi_data[6];
-
     req_data_t req_data;
 
     if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
@@ -141,7 +140,7 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     // compare signature
     snprintf(raw_data, sizeof (raw_data), "%d%d%d%s", req_data.x,
                          req_data.y, req_data.z, SERCRET_KEY);
-    printf("raw_data: %s\n", raw_data);
+    // printf("raw_data: %s\n", raw_data);
 
     sig_created = str2md5(raw_data, strlen (raw_data));
     printf("signature created: %s\n", sig_created);
@@ -157,7 +156,9 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     // package data to spi slave
     spi_data_to_send(req_data, spi_data, sizeof spi_data);
     // send data
-    wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, sizeof spi_data);
+    wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, 2);
+    wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[2], 2);
+    wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[4], 2);
 
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
