@@ -4,7 +4,7 @@ INCLUDE =   -I./ \
 
 CFLAGS = -Wall -g $(INCLUDE)
 LIBS = -lmicrohttpd -lcrypto -lwiringPi
-OBJS = main.o misc.o http_resp.o
+OBJS = main.o misc.o http_resp.o gps.o serial.o
 
 #tool
 CC = gcc

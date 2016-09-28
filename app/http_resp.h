@@ -6,7 +6,8 @@
 
 #define PORT 8080
 // format data response
-#define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": \"%s\"}"
+// #define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": {\"longitude\":%d, \"latitude\":%d, \"speed\":%d}}"
+#define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": %s}"
 #define RESP_DEV_INFO_FORMAT "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
 // HTTP method
 #define GET                  0
@@ -21,18 +22,18 @@
 #define INVALID_PARAMS      -1
 #define INVALID_SIGNATURE   -2
 #define NO_SUPPORT          -3
-#define NOT_FOUND			"<html><body>404 Not found </body></html>"
-#define BAD_REQUEST			"<html><body>400 Bad request </body></html>"
+#define NOT_FOUND           "<html><body>404 Not found </body></html>"
+#define BAD_REQUEST         "<html><body>400 Bad request </body></html>"
 
 // define command
-#define CMD_DEV_INFO		"/api/info"				// case 1.1	- get device infomation
-#define CMD_DEV_CTRL		"/api/move"				// case 1.2 - push control data to device
+#define CMD_DEV_INFO    "/api/info"       // case 1.1 - get device infomation
+#define CMD_DEV_CTRL    "/api/move"       // case 1.2 - push control data to device
 
 // define struct for post data proccess
 struct connection_data_s {
-	int  connectiontype;	// http method
-	char *recv_data;		// raw post data
-	int  recv_data_len;     // raw post data len
+  int  connectiontype;  // http method
+  char *recv_data;    // raw post data
+  int  recv_data_len;     // raw post data len
 };
 
 /******************************************************************************

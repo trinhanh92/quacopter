@@ -8,7 +8,7 @@
 #include "misc.h"
 #include "microhttpd.h"
 #include <wiringPiSPI.h>
-
+#include "gps.h"
 /******************************************************************************
 * @brief Print request header
 * 
@@ -74,12 +74,17 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
     char x_val[5] = {0}; 
     char y_val[5] = {0}; 
     char z_val[5] = {0}; 
+    char t_val[5] = {0}; 
     char sig_recv[33] = {0};
 
     char *sig_created;
     char raw_data[50] = {0};
     u8_t spi_data[6];
     req_data_t req_data;
+
+    // unsigned int longitude;
+    // unsigned int latitude;
+    // unsigned int speed;
 
     if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
         // continue process
@@ -121,6 +126,14 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_OK;
     }
 
+    // find t value
+    ret_val = parse_request(buffer, buffer_len, "t", t_val);
+    if (ret_val < 0) {
+        printf("[POST] - Request param t invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
     // find sig value
     ret_val = parse_request(buffer, buffer_len, "sig", sig_recv);
     if (ret_val < 0) {
@@ -138,6 +151,7 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
     // compare signature
     snprintf(raw_data, sizeof (raw_data), "%d%d%d%s", req_data.x,
                          req_data.y, req_data.z, SERCRET_KEY);
+    // create md5 string
     sig_created = str2md5(raw_data, strlen (raw_data));
     printf("signature created: %s\n", sig_created);
     if (0 != strcmp(sig_created, req_data.sig)) {
@@ -149,6 +163,9 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_OK;
     }
 
+    if (0 == strcmp(t_val, "00")) {
+        return MHD_NO;
+    }
     // package data to spi slave
     spi_data_to_send(req_data, spi_data, sizeof spi_data);
     // send data
@@ -156,6 +173,8 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
     wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[2], 2);
     wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[4], 2);
 
+    // get_gps_data(&latitude, &longitude, &speed);
+    // snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, latitude, longitude, speed);
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
     return MHD_HTTP_OK;
