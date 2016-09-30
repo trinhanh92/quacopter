@@ -82,14 +82,15 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
     u8_t spi_data[6];
     req_data_t req_data;
 
-    // unsigned int longitude;
-    // unsigned int latitude;
+    unsigned int longitude = 0;
+    unsigned int latitude = 0;
     // unsigned int speed;
 
     if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
         // continue process
     } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
-        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
+        get_gps_data(&longitude, &latitude);
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_GPS_DATA_FORMAT, SUCCESS, longitude, latitude);
         return MHD_HTTP_OK;
     } else {                                        // unsupport command
         strcpy(resp, NOT_FOUND);

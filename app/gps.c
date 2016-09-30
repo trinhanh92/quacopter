@@ -41,6 +41,7 @@ parse_decimal(char *str) {
 //   unsigned char ground_speed, track_angle;
 //   char          lat_dir, long_dir;  
 //   char *        parse_ptr;
+
 //   if (NULL == inp_buff || 0 > len) {
 //     return;
 //   }     
@@ -96,14 +97,66 @@ parse_decimal(char *str) {
 * @param[out]  speed     - speed of  drone
 */
 int get_gps_data(unsigned int * latitude,
-        unsigned int * longitude,
-        unsigned int * speed 
+        unsigned int * longitude
 ) 
 {
   *latitude = l_latitude;
   *longitude = l_longitude;
-  *speed = l_speed;
   return 0;
+}
+
+
+/**
+*
+*/
+char *
+rmc_shift_ptr(char * src_buff, char * token, int times_to_shift)
+{
+  char * ptr = src_buff; 
+  int cnt;
+  for (cnt = 0; cnt < times_to_shift; cnt++) {
+    // printf("time %d\n", cnt + 1);
+    ptr = strstr(ptr, token);
+    ptr++; 
+  } 
+  return ptr;
+}
+
+/**
+* @brief parse data rmc
+*/
+void gps_parse_data_rmc(char * rmc_buff, int len) 
+{
+  char * parse_ptr;
+  char * long_ptr = NULL;
+  char * lat_ptr = NULL;
+  long_ptr =  rmc_shift_ptr (rmc_buff, ",", 3);
+  if (NULL != long_ptr) {
+    lat_ptr  =  rmc_shift_ptr (long_ptr, ",", 2);
+    // printf("long ptr %s\n", long_ptr);
+    // printf("lat ptr %s\n", lat_ptr);
+  } else {
+    printf("can not find longitude data\n");
+    return;
+  }
+  if (NULL != lat_ptr) {
+    // get longitude
+    parse_ptr = long_ptr;
+    l_longitude = parse_decimal (parse_ptr);
+    l_longitude *= 100000;
+    parse_ptr = strstr(parse_ptr, ".") + 1;
+    l_longitude += parse_decimal (parse_ptr);
+    //get latitude
+    parse_ptr = lat_ptr;
+    l_latitude = parse_decimal (parse_ptr);
+    l_latitude *= 100000;
+    parse_ptr = strstr(parse_ptr, ".") + 1;
+    l_latitude += parse_decimal (parse_ptr);
+    printf("long = %d, lat = %d\n", l_longitude, l_latitude);
+  } else {
+    printf("can not find latitude data\n");
+    return;
+  }
 }
 
 /**

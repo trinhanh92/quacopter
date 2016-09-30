@@ -6,7 +6,7 @@
 
 #define PORT 8080
 // format data response
-// #define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": {\"longitude\":%d, \"latitude\":%d, \"speed\":%d}}"
+#define RESP_GPS_DATA_FORMAT     "{\"error\": %d,\"data\": {\"longitude\":%d, \"latitude\":%d}}"
 #define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": %s}"
 #define RESP_DEV_INFO_FORMAT "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
 // HTTP method
@@ -68,5 +68,7 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
                         const char *version, const char *upload_data,
                         size_t *upload_data_size, void **con_cls);
 
+// extern rmc buff
+extern unsigned char * p_start_rmc;
 
 #endif
