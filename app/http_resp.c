@@ -8,7 +8,7 @@
 #include "misc.h"
 #include "microhttpd.h"
 #include <wiringPiSPI.h>
-
+#include "rf24_drivers.h"
 /******************************************************************************
 * @brief Print request header
 * 
@@ -151,10 +151,12 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
 
     // package data to spi slave
     spi_data_to_send(req_data, spi_data, sizeof spi_data);
-    // send data
-    wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, 2);
-    wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[2], 2);
-    wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[4], 2);
+    rf_stop_listenning();
+    rf_send_data(spi_data, sizeof spi_data);
+    rf_start_listenning();    //TODO: send data RF
+    // wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, 2);
+    // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[2], 2);
+    // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[4], 2);
 
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);

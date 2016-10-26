@@ -1,7 +1,7 @@
 #ifndef __HTTP_RESP_H_
 #define __HTTP_RESP_H_
 
-#include <stdbool.h>
+// #include <stdbool.h>
 #include "microhttpd.h"
 
 #define PORT 8080
