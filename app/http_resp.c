@@ -57,9 +57,24 @@ send_resp(struct MHD_Connection *connection,
 }
 
 /******************************************************************************
-* @brief Process request data 
+* @brief Process location request data 
 * 
-* @param[in]    url          - request command 
+* @param[in]    buffer       - location request data 
+* @param[in]    buffer_len   - request data length
+* @param[in]    resp         - response data
+*
+* @return       http status code
+*
+*/
+static int
+handle_location_req(char *buffer, int buffer_len, char *resp) 
+{
+    return MHD_HTTP_OK;  
+}
+
+/******************************************************************************
+* @brief Process control request data 
+* 
 * @param[in]    buffer       - request data 
 * @param[in]    buffer_len   - request data length
 * @param[in]    resp         - response data
@@ -68,9 +83,9 @@ send_resp(struct MHD_Connection *connection,
 *
 */
 static int
-process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
+handle_control_req(char *buffer, int buffer_len, char *resp) 
 {
-    int ret_val;
+    int  ret_val;
     char x_val[5] = {0}; 
     char y_val[5] = {0}; 
     char z_val[5] = {0}; 
@@ -78,19 +93,8 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
 
     char *sig_created;
     char raw_data[50] = {0};
-    u8_t spi_data[6];
+    // u8_t spi_data[6];
     req_data_t req_data;
-
-    if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
-        // continue process
-    } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
-        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
-        return MHD_HTTP_OK;
-    } else {                                        // unsupport command
-        strcpy(resp, NOT_FOUND);
-        return MHD_HTTP_NOT_FOUND;
-    }
-
     // case post data null - response bad request
     if(0 == buffer_len) {
         strcpy(resp, BAD_REQUEST);
@@ -149,17 +153,41 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_OK;
     }
 
-    // package data to spi slave
-    spi_data_to_send(req_data, spi_data, sizeof spi_data);
-    rf_stop_listenning();
-    rf_send_data(spi_data, sizeof spi_data);
-    rf_start_listenning();    //TODO: send data RF
-    // wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, 2);
-    // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[2], 2);
-    // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[4], 2);
-
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
+    return MHD_HTTP_OK;
+}
+
+/******************************************************************************
+* @brief Process request data 
+* 
+* @param[in]    url          - request command 
+* @param[in]    buffer       - request data 
+* @param[in]    buffer_len   - request data length
+* @param[in]    resp         - response data
+*
+* @return       http status code
+*
+*/
+static int
+process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
+{
+
+    if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
+    // process control request
+        return handle_control_req(buffer, buffer_len, resp);
+    }  else if (0 == strcmp(url, CMD_DEV_LOC)){
+    // process location request
+        return handle_location_req(buffer, buffer_len, resp);
+    } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
+    // process info request
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
+        return MHD_HTTP_OK;
+    } else {                                        // unsupport command
+        strcpy(resp, NOT_FOUND);
+        return MHD_HTTP_NOT_FOUND;
+    }
+
     return MHD_HTTP_OK;
 }
 

@@ -27,7 +27,7 @@
 // define command
 #define CMD_DEV_INFO		"/api/info"				// case 1.1	- get device infomation
 #define CMD_DEV_CTRL		"/api/move"				// case 1.2 - push control data to device
-
+#define CMD_DEV_LOC         "/api/location"         // location request
 // define struct for post data proccess
 struct connection_data_s {
 	int  connectiontype;	// http method
