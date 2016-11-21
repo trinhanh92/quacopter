@@ -6,8 +6,9 @@
 
 #define PORT 8080
 // format data response
-#define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": \"%s\"}"
-#define RESP_DEV_INFO_FORMAT "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
+#define RESP_DATA_FORMAT         "{\"error\": %d,\"data\": \"%s\"}"
+#define RESP_DATA_LOC_FORMAT     "{\"error\": %d,\"data\": {\"lat\":\"%s\", \"lng\": \"%s\"}}"
+#define RESP_DEV_INFO_FORMAT     "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
 // HTTP method
 #define GET                  0
 #define POST                 1

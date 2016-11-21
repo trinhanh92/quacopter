@@ -69,6 +69,57 @@ send_resp(struct MHD_Connection *connection,
 static int
 handle_location_req(char *buffer, int buffer_len, char *resp) 
 {
+    int ret_val;
+    char lat[10] = {0};
+    char lng[10] = {0};
+    char sig_recv[33] = {0};
+    char *sig_created;
+    char raw_data[50] = {0};
+
+    // case post data null - response bad request
+    if(0 == buffer_len) {
+        strcpy(resp, BAD_REQUEST);
+        return MHD_HTTP_BAD_REQUEST;     
+    } 
+    // parse data from post request
+
+    // find latitude value
+    ret_val = parse_request(buffer, buffer_len, "lat", lat);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Lat invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    // find longatude value
+    ret_val = parse_request(buffer, buffer_len, "lng", lng);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Lng invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
+    // find sig value
+    ret_val = parse_request(buffer, buffer_len, "sig", sig_recv);
+    if (ret_val < 0) {
+        printf("[POST] - Request param SIG invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    // compare signature
+    snprintf(raw_data, sizeof (raw_data), "%s%s%s", lat, lng, SERCRET_KEY);
+    sig_created = str2md5(raw_data, strlen (raw_data));
+    printf("signature created: %s\n", sig_created);
+    if (0 != strcmp(sig_created, sig_recv)) {
+        // invalid signature
+        printf("[POST] - Invalid signature\n");
+        // strcpy(resp, "Invalid signature\r\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_SIGNATURE, "null");
+        //TODO: Handle invalid signature 
+        return MHD_HTTP_OK;
+    }
+
+    snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_LOC_FORMAT, SUCCESS, lat, lng);
+    // printf("Response: %s\n", resp);
     return MHD_HTTP_OK;  
 }
 

@@ -125,7 +125,10 @@ parse_request(char *request, int req_len, char *key, char *value)
 
     } else if ((0 == strcmp(key, "x")) || 
                (0 == strcmp(key, "y")) || 
-               (0 == strcmp(key, "z"))) {
+               (0 == strcmp(key, "z")) ||
+               (0 == strcmp(key, "lat")) ||
+               (0 == strcmp(key, "lng"))
+               ) {
         key_ptr = strstr(temp_ptr, key);    // search key position
     
         if (NULL == key_ptr) {
