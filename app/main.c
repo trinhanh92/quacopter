@@ -12,6 +12,8 @@
 #include <pthread.h>
 
 unsigned char * p_start_rmc = NULL;
+volatile latlng_t g_lat_val;
+volatile latlng_t g_lng_val;
 /**
 * @brief function handle gps process in gps thread
 */
@@ -58,11 +60,11 @@ main ()
     // req_data.x = 0;
     // req_data.y = 0;
     // req_data.z = 0;
-    spi_data_to_send(req_data, spi_data, sizeof spi_data);
-    rf_stop_listenning();
-    rf_send_data(spi_data, sizeof spi_data);
-    rf_start_listenning();
-    //TODO: send data RF
+    // spi_data_to_send(req_data, spi_data, sizeof spi_data);
+    // rf_stop_listenning();
+    // rf_send_data(spi_data, sizeof spi_data);
+    // rf_start_listenning();
+    // //TODO: send data RF
     // wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, 2);
     // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[2], 2);
     // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[4] , 2);
@@ -74,10 +76,13 @@ main ()
 void *rf_thread_func(void * ptr)
 {
   uint8_t recv_buff[100] = {0};
+  // latlng_t lat_val, lng_val;
   while (1) {
     while(rf_data_available()) {
         nrf24_read(&recv_buff, sizeof recv_buff);
         printf("receiving data: %s\n", recv_buff);
+        memcpy(g_lat_val.val_in_bytes, &recv_buff[1], 4);
+        memcpy(g_lng_val.val_in_bytes, &recv_buff[5], 4);
     }
     sleep(1);
   }

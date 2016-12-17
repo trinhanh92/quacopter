@@ -9,6 +9,9 @@
 #include "microhttpd.h"
 #include <wiringPiSPI.h>
 #include "rf24_drivers.h"
+
+extern volatile latlng_t g_lat_val;
+extern volatile latlng_t g_lng_val;
 /******************************************************************************
 * @brief Print request header
 * 
@@ -57,9 +60,93 @@ send_resp(struct MHD_Connection *connection,
 }
 
 /******************************************************************************
-* @brief Process request data 
+* @brief Process location request data 
 * 
-* @param[in]    url          - request command 
+* @param[in]    buffer       - location request data 
+* @param[in]    buffer_len   - request data length
+* @param[in]    resp         - response data
+*
+* @return       http status code
+*
+*/
+static int
+handle_location_req(char *buffer, int buffer_len, char *resp) 
+{
+    int ret_val;
+    char lat[11] = {0};
+    char lng[11] = {0};
+    char sig_recv[33] = {0};
+    char *sig_created;
+    char raw_data[100] = {0};
+    req_data_t req_data;
+    u8_t rf_data[33] = {0};
+
+    // case post data null - response bad request
+    if(0 == buffer_len) {
+        strcpy(resp, BAD_REQUEST);
+        return MHD_HTTP_BAD_REQUEST;     
+    } 
+    // parse data from post request
+
+    // find latitude value
+    ret_val = parse_request(buffer, buffer_len, "lat", lat);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Lat invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    // find longatude value
+    ret_val = parse_request(buffer, buffer_len, "lng", lng);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Lng invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
+    // find sig value
+    ret_val = parse_request(buffer, buffer_len, "sig", sig_recv);
+    if (ret_val < 0) {
+        printf("[POST] - Request param SIG invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    // compare signature
+    snprintf(raw_data, sizeof (raw_data), "%s%s%s", lat, lng, SERCRET_KEY);
+    sig_created = str2md5(raw_data, strlen (raw_data));
+    printf("signature created: %s\n", sig_created);
+    if (0 != strcmp(sig_created, sig_recv)) {
+        // invalid signature
+        printf("[POST] - Invalid signature\n");
+        // strcpy(resp, "Invalid signature\r\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_SIGNATURE, "null");
+        //TODO: Handle invalid signature 
+        return MHD_HTTP_OK;
+    }
+
+
+    // show data
+    req_data.msg_type = 'L';
+    req_data.x = 0;
+    req_data.y = 0;
+    req_data.z = 0;
+    req_data.t = 0;
+    req_data.m = 0;
+    req_data.lat.val = g_lat_val.val;
+    req_data.lng.val = g_lng_val.val;
+    strncpy(req_data.sig, sig_recv, sizeof sig_recv);
+    rf_data_to_send(req_data, rf_data, sizeof rf_data);
+    rf_stop_listenning();
+    rf_send_data(rf_data, sizeof rf_data);
+    rf_start_listenning();
+
+    snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_LOC_FORMAT, SUCCESS, lat, lng);
+    // printf("Response: %s\n", resp);
+    return MHD_HTTP_OK;  
+}
+
+/******************************************************************************
+* @brief Process control request data 
+* 
 * @param[in]    buffer       - request data 
 * @param[in]    buffer_len   - request data length
 * @param[in]    resp         - response data
@@ -68,28 +155,22 @@ send_resp(struct MHD_Connection *connection,
 *
 */
 static int
-process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
+handle_control_req(char *buffer, int buffer_len, char *resp) 
 {
-    int ret_val;
+    int  ret_val;
     char x_val[5] = {0}; 
     char y_val[5] = {0}; 
     char z_val[5] = {0}; 
+    char t_val[5] = {0}; 
+    char m_val[5] = {0}; 
+    char lat_val[11] = {0}; 
+    char lng_val[11] = {0}; 
     char sig_recv[33] = {0};
 
     char *sig_created;
-    char raw_data[50] = {0};
-    u8_t spi_data[6];
+    char raw_data[100] = {0};
+    u8_t rf_data[33] = {0};
     req_data_t req_data;
-
-    if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
-        // continue process
-    } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
-        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
-        return MHD_HTTP_OK;
-    } else {                                        // unsupport command
-        strcpy(resp, NOT_FOUND);
-        return MHD_HTTP_NOT_FOUND;
-    }
 
     // case post data null - response bad request
     if(0 == buffer_len) {
@@ -121,6 +202,36 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_OK;
     }
 
+    // find t value
+    ret_val = parse_request(buffer, buffer_len, "t", t_val);
+    if (ret_val < 0) {
+        printf("[POST] - Request param T invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
+    // find m value
+    ret_val = parse_request(buffer, buffer_len, "m", m_val);
+    if (ret_val < 0) {
+        printf("[POST] - Request param M invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    // find lot value
+    ret_val = parse_request(buffer, buffer_len, "lat", lat_val);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Latitude invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    // find lng value
+    ret_val = parse_request(buffer, buffer_len, "lng", lng_val);
+    if (ret_val < 0) {
+        printf("[POST] - Request param Longatude invalid\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+
     // find sig value
     ret_val = parse_request(buffer, buffer_len, "sig", sig_recv);
     if (ret_val < 0) {
@@ -130,14 +241,25 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
     }
 
     // show data
+    req_data.msg_type = 'M';
     req_data.x = atoi(x_val);
     req_data.y = atoi(y_val);
     req_data.z = atoi(z_val);
+    req_data.t = atoi(t_val);
+    req_data.m = atoi(m_val);
+    req_data.lat.val = 0;
+    req_data.lng.val = 0;
     strncpy(req_data.sig, sig_recv, sizeof sig_recv);
 
     // compare signature
-    snprintf(raw_data, sizeof (raw_data), "%d%d%d%s", req_data.x,
-                         req_data.y, req_data.z, SERCRET_KEY);
+    snprintf(raw_data, sizeof (raw_data), "%d%d%d%d%d%s%s%s", req_data.x,
+                         req_data.y, 
+                         req_data.z, 
+                         req_data.t, 
+                         req_data.m, 
+                         lat_val, 
+                         lng_val, 
+                         SERCRET_KEY);
     sig_created = str2md5(raw_data, strlen (raw_data));
     printf("signature created: %s\n", sig_created);
     if (0 != strcmp(sig_created, req_data.sig)) {
@@ -149,17 +271,48 @@ process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_OK;
     }
 
-    // package data to spi slave
-    spi_data_to_send(req_data, spi_data, sizeof spi_data);
+    // forward request to Tiva through RF
+    strncpy(req_data.sig, sig_recv, sizeof sig_recv);
+    rf_data_to_send(req_data, rf_data, sizeof rf_data);
     rf_stop_listenning();
-    rf_send_data(spi_data, sizeof spi_data);
-    rf_start_listenning();    //TODO: send data RF
-    // wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, 2);
-    // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[2], 2);
-    // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[4], 2);
+    rf_send_data(rf_data, sizeof rf_data);
+    rf_start_listenning();
 
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
+    return MHD_HTTP_OK;
+}
+
+/******************************************************************************
+* @brief Process request data 
+* 
+* @param[in]    url          - request command 
+* @param[in]    buffer       - request data 
+* @param[in]    buffer_len   - request data length
+* @param[in]    resp         - response data
+*
+* @return       http status code
+*
+*/
+static int
+process_post_data(const char *url, char *buffer, int buffer_len, char *resp)
+{
+
+    if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
+    // process control request
+        return handle_control_req(buffer, buffer_len, resp);
+    }  else if (0 == strcmp(url, CMD_DEV_LOC)){
+    // process location request
+        return handle_location_req(buffer, buffer_len, resp);
+    } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
+    // process info request
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
+        return MHD_HTTP_OK;
+    } else {                                        // unsupport command
+        strcpy(resp, NOT_FOUND);
+        return MHD_HTTP_NOT_FOUND;
+    }
+
     return MHD_HTTP_OK;
 }
 

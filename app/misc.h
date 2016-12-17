@@ -11,15 +11,26 @@
 typedef unsigned short  u16_t;
 typedef signed short    i16_t;
 typedef unsigned char   u8_t;
+typedef signed char     i8_t;
+
+/** location data */
+typedef union latlng_u {
+	float val;
+	u8_t   val_in_bytes[4];
+} latlng_t;
 
 /* data from client request */
 typedef struct req_data_s {
-	i16_t x;				// value of x
-	i16_t y;				// value of y
-	i16_t z;				// value of z
+	u8_t msg_type;
+	i8_t x;				// value of x
+	i8_t y;				// value of y
+	i8_t z;				// value of z
+	u8_t t;				// value of t
+	u8_t m;				// value of m
+	latlng_t lat;				// value of lat 
+	latlng_t lng;				// value of lng 
 	char sig[33];		// signature in MD5
 } req_data_t;
-
 
 
 /******************************************************************************
@@ -43,6 +54,17 @@ short2byte(i16_t inp_num, u8_t *byte_arr);
 void
 spi_data_to_send(req_data_t req_data, u8_t *send_data, int send_data_len);
 
+
+/******************************************************************************
+* @brief Package data to send to RF 
+*   
+* @param[in]  req_data      - request data
+* @param[out] send_data     - send data buffer in hex
+* @param[in]  send_data_len - length of send data in bytes
+* @return     None
+*/
+void
+rf_data_to_send(req_data_t req_data, u8_t *send_data, int send_data_len);
 /******************************************************************************
 * @brief Encrypt a plain text o MD5 
 *   

@@ -21,6 +21,62 @@ short2byte(i16_t inp_num, u8_t *byte_arr)
 }
 
 
+void
+rf_data_to_send(req_data_t req_data, u8_t *send_data, int send_data_len)
+{
+    int i;
+    // u8_t x_buf[2];
+    // u8_t y_buf[2];
+    // u8_t z_buf[2];
+    u8_t x_val = 50 , y_val = 50;
+    // convert number to single byte array
+    // short2byte(req_data.x, x_buf);
+    // short2byte(req_data.y, y_buf);
+    // short2byte(req_data.z, z_buf);
+
+    if (req_data.x >= -100 && req_data.x < -40) {
+        x_val = 10;
+    } else if (req_data.x >= -40 && req_data.x < -20) {
+        x_val = 30;
+    } else if (req_data.x >= -20 && req_data.x < 20) {
+       x_val = 50;
+    } else if (req_data.x >= 20 && req_data.x < 40) {
+       x_val = 70;
+    } else if (req_data.x >= 40 && req_data.x <= 100) {
+       x_val = 90;
+    }
+
+    if (req_data.y >= -100 && req_data.y < -40) {
+        y_val = 10;
+    } else if (req_data.y >= -40 && req_data.y < -20) {
+        y_val = 30;
+    } else if (req_data.y >= -20 && req_data.y < 20) {
+        y_val = 50;
+    } else if (req_data.y >= 20 && req_data.y < 40) {
+        y_val = 70;
+    } else if (req_data.y >= 40 && req_data.y <= 100) {
+       y_val = 90;
+    }
+    // join data into a output array to send througn SPI
+    memset(send_data, 0, send_data_len);
+    memcpy(send_data, &req_data.msg_type, 1);
+    memcpy(send_data + 1, &x_val, 1);
+    memcpy(send_data + 2, &y_val, 1);
+    memcpy(send_data + 3, &req_data.z, 1);
+    memcpy(send_data + 4, &req_data.t, 1);
+    memcpy(send_data + 5, &req_data.m, 1);
+    memcpy(send_data + 6, &req_data.lat.val_in_bytes, 4);
+    memcpy(send_data + 10, &req_data.lng.val_in_bytes, 4);
+    
+
+    // show result
+    printf("\nspi send data: ");
+    for (i = 0; i < send_data_len; i++) {
+        printf("%02X ", send_data[i]);
+    }
+    printf("\n");
+}
+
 /******************************************************************************
 * @brief Package data to send to SPI slave
 *   
@@ -125,7 +181,12 @@ parse_request(char *request, int req_len, char *key, char *value)
 
     } else if ((0 == strcmp(key, "x")) || 
                (0 == strcmp(key, "y")) || 
-               (0 == strcmp(key, "z"))) {
+               (0 == strcmp(key, "z")) ||
+               (0 == strcmp(key, "t")) ||
+               (0 == strcmp(key, "m")) ||
+               (0 == strcmp(key, "lat")) ||
+               (0 == strcmp(key, "lng"))
+               ) {
         key_ptr = strstr(temp_ptr, key);    // search key position
     
         if (NULL == key_ptr) {

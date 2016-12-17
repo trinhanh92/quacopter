@@ -6,8 +6,9 @@
 
 #define PORT 8080
 // format data response
-#define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": \"%s\"}"
-#define RESP_DEV_INFO_FORMAT "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
+#define RESP_DATA_FORMAT         "{\"error\": %d,\"data\": \"%s\"}"
+#define RESP_DATA_LOC_FORMAT     "{\"error\": %d,\"data\": {\"lat\":\"%s\", \"lng\": \"%s\"}}"
+#define RESP_DEV_INFO_FORMAT     "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
 // HTTP method
 #define GET                  0
 #define POST                 1
@@ -27,7 +28,7 @@
 // define command
 #define CMD_DEV_INFO		"/api/info"				// case 1.1	- get device infomation
 #define CMD_DEV_CTRL		"/api/move"				// case 1.2 - push control data to device
-
+#define CMD_DEV_LOC         "/api/location"         // location request
 // define struct for post data proccess
 struct connection_data_s {
 	int  connectiontype;	// http method
@@ -67,5 +68,7 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
                         const char *version, const char *upload_data,
                         size_t *upload_data_size, void **con_cls);
 
+
+  
 
 #endif
