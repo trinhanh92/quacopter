@@ -30,7 +30,7 @@ main ()
     req_data_t req_data;
    
    // init RF24
-    rf_init();
+    // rf_init();
 
     ret_val = pthread_create (&rf_thread, NULL, rf_thread_func, NULL);
     if (ret_val) {
@@ -78,12 +78,12 @@ void *rf_thread_func(void * ptr)
   uint8_t recv_buff[100] = {0};
   // latlng_t lat_val, lng_val;
   while (1) {
-    while(rf_data_available()) {
-        nrf24_read(&recv_buff, sizeof recv_buff);
-        printf("receiving data: %s\n", recv_buff);
-        memcpy(g_lat_val.val_in_bytes, &recv_buff[1], 4);
-        memcpy(g_lng_val.val_in_bytes, &recv_buff[5], 4);
-    }
+    // while(rf_data_available()) {
+    //     nrf24_read(&recv_buff, sizeof recv_buff);
+    //     printf("receiving data: %s\n", recv_buff);
+    //     memcpy(g_lat_val.val_in_bytes, &recv_buff[1], 4);
+    //     memcpy(g_lng_val.val_in_bytes, &recv_buff[5], 4);
+    // }
     sleep(1);
   }
 }

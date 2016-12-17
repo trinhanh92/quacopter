@@ -9,6 +9,7 @@
 #include "microhttpd.h"
 #include <wiringPiSPI.h>
 #include "rf24_drivers.h"
+#include "url_encode.h"
 
 extern volatile latlng_t g_lat_val;
 extern volatile latlng_t g_lng_val;
@@ -110,6 +111,8 @@ handle_location_req(char *buffer, int buffer_len, char *resp)
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
         return MHD_HTTP_OK;
     }
+    strncpy(lat, url_encode(lat), sizeof lat);
+    strncpy(lng, url_encode(lng), sizeof lng);
     // compare signature
     snprintf(raw_data, sizeof (raw_data), "%s%s%s", lat, lng, SERCRET_KEY);
     sig_created = str2md5(raw_data, strlen (raw_data));
@@ -135,11 +138,11 @@ handle_location_req(char *buffer, int buffer_len, char *resp)
     req_data.lng.val = g_lng_val.val;
     strncpy(req_data.sig, sig_recv, sizeof sig_recv);
     rf_data_to_send(req_data, rf_data, sizeof rf_data);
-    rf_stop_listenning();
-    rf_send_data(rf_data, sizeof rf_data);
-    rf_start_listenning();
+    // rf_stop_listenning();
+    // rf_send_data(rf_data, sizeof rf_data);
+    // rf_start_listenning();
 
-    snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_LOC_FORMAT, SUCCESS, lat, lng);
+    snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_LOC_FORMAT, SUCCESS, req_data.lat.val, req_data.lng.val);
     // printf("Response: %s\n", resp);
     return MHD_HTTP_OK;  
 }
@@ -232,6 +235,9 @@ handle_control_req(char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_OK;
     }
 
+    strncpy(lat_val, url_encode(lat_val), sizeof lat_val);
+    strncpy(lng_val, url_encode(lng_val), sizeof lng_val);
+
     // find sig value
     ret_val = parse_request(buffer, buffer_len, "sig", sig_recv);
     if (ret_val < 0) {
@@ -274,9 +280,9 @@ handle_control_req(char *buffer, int buffer_len, char *resp)
     // forward request to Tiva through RF
     strncpy(req_data.sig, sig_recv, sizeof sig_recv);
     rf_data_to_send(req_data, rf_data, sizeof rf_data);
-    rf_stop_listenning();
-    rf_send_data(rf_data, sizeof rf_data);
-    rf_start_listenning();
+    // rf_stop_listenning();
+    // rf_send_data(rf_data, sizeof rf_data);
+    // rf_start_listenning();
 
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);

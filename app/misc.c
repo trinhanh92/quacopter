@@ -70,11 +70,11 @@ rf_data_to_send(req_data_t req_data, u8_t *send_data, int send_data_len)
     
 
     // show result
-    printf("\nspi send data: ");
-    for (i = 0; i < send_data_len; i++) {
-        printf("%02X ", send_data[i]);
-    }
-    printf("\n");
+    // printf("\nspi send data: ");
+    // for (i = 0; i < send_data_len; i++) {
+    //     printf("%02X ", send_data[i]);
+    // }
+    // printf("\n");
 }
 
 /******************************************************************************
@@ -200,7 +200,7 @@ parse_request(char *request, int req_len, char *key, char *value)
     }
 
     strncpy(value, key_ptr + strlen(key) + 1, value_len);   // + len of key and +1 for '='
-    printf("value of %s is: %s\n", key, value);
+    // printf("value of %s is: %s\n", key, value);
     return 0;
 
 }
