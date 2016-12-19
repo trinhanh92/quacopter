@@ -93,3 +93,51 @@ int json_parser(const char *json_string, int len, const char *key, char *value_r
     }
     return 0;
 }
+/******************************************************************************
+* @brief Get value request string with specific key
+*
+* @param[in]  request     - post data request strin 
+* @param[in]  req_len     - length of request string
+* @param[in]  key         - key to find value
+* @param[out] value       - value return corresponding key
+* @return     0 if success, other for fail
+*/
+int
+parse_request(char *request, int req_len, char *key, char *value)
+{
+    char *and_ptr = NULL;
+    char *key_ptr = NULL;
+    int  value_len = 0;
+    char *temp_ptr = request;
+
+    // string is NULL
+    if(NULL == request)
+    {
+        return -1;
+    }
+
+    if (0 == strcmp(key, "sig")) {
+        key_ptr = strstr(temp_ptr, key);    // search 'sig' position
+        if (NULL == key_ptr) {
+            return -1;
+        }
+        value_len = (req_len - (key_ptr - temp_ptr) - strlen(key) - 1); // minus len of key and an '=' char
+
+    } else if (0 == strcmp(key, "direct")) {
+        key_ptr = strstr(temp_ptr, key);    // search key position
+    
+        if (NULL == key_ptr) {
+            return -1;                      // have no key in string
+        }
+        and_ptr =  strstr(key_ptr, "&");    // search '&' position
+        value_len = and_ptr - key_ptr - strlen(key) - 1;                // minus len of key and an '='
+
+    } else {
+        return -1;
+    }
+
+    strncpy(value, key_ptr + strlen(key) + 1, value_len);   // + len of key and +1 for '='
+    printf("value of %s is: %s\n", key, value);
+    return 0;
+
+}

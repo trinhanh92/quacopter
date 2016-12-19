@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "microhttpd.h"
 
-#define PORT 8080
+#define PORT 6969
 // format data response
 #define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": %s}"
 #define RESP_DEV_INFO_FORMAT "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
@@ -66,4 +66,7 @@ http_resp_handler (void *cls, struct MHD_Connection *connection,
                         const char *url, const char *method,
                         const char *version, const char *upload_data,
                         size_t *upload_data_size, void **con_cls);
+
+extern int i2c_fd;
+
 #endif

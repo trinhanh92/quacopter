@@ -1,7 +1,7 @@
 #ifndef __MISC_H__
 #define __MISC_H__
 
-#define SERCRET_KEY "drone_hung_hue@uit.edu.vn"
+#define SERCRET_KEY "tien_phuc@uit.edu.vn"
 
 /******************************************************************************
 * @brief This function used to encrypt a plain text o MD5 
@@ -21,4 +21,16 @@ char *str2md5(const char *str, int length);
 * @param[out] value_ret  - value return corresponding key
 */
 int json_parser(const char *json_string, int len, const char *key, char *value_return);
+
+/******************************************************************************
+* @brief Get value request string with specific key
+*
+* @param[in]  request     - post data request strin 
+* @param[in]  req_len     - length of request string
+* @param[in]  key         - key to find value
+* @param[out] value       - value return corresponding key
+* @return     0 if success, other for fail
+*/
+int
+parse_request(char *request, int req_len, char *key, char *value);
 #endif

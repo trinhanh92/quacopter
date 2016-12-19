@@ -7,7 +7,7 @@
 #include "http_resp.h"
 #include "misc.h"
 #include "microhttpd.h"
-
+#include <wiringPiI2C.h>
 /******************************************************************************
 * @brief This function used to print request header
 * 
@@ -72,9 +72,9 @@ static int
 process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
 {
     int ret_val;
-    char x_axis[10] = {0};
-    char y_axis[10] = {0};
-    char z_axis[10] = {0};
+    char direct[10] = {0};
+    // char y_axis[10] = {0};
+    // char z_axis[10] = {0};
     char sig_recv[50] = {0};
     char *sig_created;
     char raw_data[50] = {0};
@@ -95,14 +95,11 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_BAD_REQUEST;     
     } 
     // parse json data from post request
-    memset(x_axis, 0, sizeof x_axis);
-    memset(y_axis, 0, sizeof y_axis);
-    memset(z_axis, 0, sizeof z_axis);
-    memset(sig_recv, 0, sizeof sig_recv);
-    ret_val = json_parser(buffer, buffer_len, "x", x_axis);
-    ret_val += json_parser(buffer, buffer_len, "y", y_axis);
-    ret_val += json_parser(buffer, buffer_len, "z", z_axis);
-    ret_val += json_parser(buffer, buffer_len, "sig", sig_recv);
+    // memset(x_axis, 0, sizeof x_axis);
+    // memset(y_axis, 0, sizeof y_axis);
+    // memset(z_axis, 0, sizeof z_axis);
+    // memset(sig_recv, 0, sizeof sig_recv);
+    ret_val = parse_request(buffer, buffer_len, "direct", direct);
     if (ret_val < 0) {
         printf("[POST] - Request params invalid\n");
         //TODO: Handle params invalid
@@ -110,12 +107,22 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
         return MHD_HTTP_OK;
     }
-    printf("x: %s\n", x_axis);
-    printf("y: %s\n", y_axis);
-    printf("z: %s\n", z_axis);
+    // ret_val += json_parser(buffer, buffer_len, "y", y_axis);
+    // ret_val += json_parser(buffer, buffer_len, "z", z_axis);
+    ret_val += parse_request(buffer, buffer_len, "sig", sig_recv);
+    if (ret_val < 0) {
+        printf("[POST] - Request params invalid\n");
+        //TODO: Handle params invalid
+        // strcpy(resp, "Invalid params\r\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    printf("direct: %s\n", direct);
+    // printf("y: %s\n", y_axis);
+    // printf("z: %s\n", z_axis);
     printf("sig: %s\n", sig_recv);
     // compare signature
-    snprintf(raw_data, sizeof (raw_data), "%s%s%s%s", x_axis, y_axis, z_axis, SERCRET_KEY);
+    snprintf(raw_data, sizeof (raw_data), "%s%s", direct, SERCRET_KEY);
     sig_created = str2md5(raw_data, strlen (raw_data));
     printf("signature created: %s\n", sig_created);
     if (0 != strcmp(sig_created, sig_recv)) {
@@ -127,6 +134,22 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         return MHD_HTTP_OK;
     }
 
+    if (0 == strcmp(direct, "left")) {
+        printf("turn left\n");
+        wiringPiI2CWrite(i2c_fd, 0x33);
+    } else if (0 == strcmp(direct, "right")) {
+        printf("turn right\n");
+        wiringPiI2CWrite(i2c_fd, 0x44);
+    } else if (0 == strcmp(direct, "down")) {
+        printf("go back\n");
+        wiringPiI2CWrite(i2c_fd, 0x22);
+    } else if (0 == strcmp(direct, "up")) {
+        printf("go ahead\n");
+        wiringPiI2CWrite(i2c_fd, 0x11);
+    } else {
+        // do nothing
+        printf("wrong direct\n");
+    }
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
     return MHD_HTTP_OK;

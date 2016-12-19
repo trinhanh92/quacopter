@@ -5,7 +5,7 @@ INCLUDE =   -I./ \
 LIBS_PATH = -L../libraries/json/
 
 CFLAGS = -Wall -g $(INCLUDE) $(LIBS_PATH)
-LIBS = -lmicrohttpd -lcrypto -ljsmn 
+LIBS = -lmicrohttpd -lcrypto -ljsmn -lwiringPi
 OBJS = main.o misc.o http_resp.o
 
 #tool
