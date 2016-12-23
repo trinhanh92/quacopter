@@ -4,6 +4,8 @@
 #include <string.h>
 #include <openssl/md5.h>
 #include "jsmn.h"
+#include "file_utils.h"
+#include "common.h"
 
 /******************************************************************************
 * @brief This function used to encrypt a plain text string to MD5 
@@ -140,4 +142,14 @@ parse_request(char *request, int req_len, char *key, char *value)
     printf("value of %s is: %s\n", key, value);
     return 0;
 
+}
+
+int get_mode() {
+    int mode;
+    file_read(&mode, 1);
+    return mode;
+}
+
+int set_mode(int mode) {
+    return file_write(&mode, 1);
 }

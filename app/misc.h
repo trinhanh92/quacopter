@@ -33,4 +33,11 @@ int json_parser(const char *json_string, int len, const char *key, char *value_r
 */
 int
 parse_request(char *request, int req_len, char *key, char *value);
+
+
+int
+get_mode();
+
+int
+set_mode(int mode);
 #endif

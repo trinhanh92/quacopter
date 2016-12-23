@@ -8,6 +8,7 @@
 #include "misc.h"
 #include "microhttpd.h"
 #include <wiringPiI2C.h>
+#include "common.h"
 /******************************************************************************
 * @brief This function used to print request header
 * 
@@ -136,16 +137,16 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
 
     if (0 == strcmp(direct, "left")) {
         printf("turn left\n");
-        wiringPiI2CWrite(i2c_fd, 0x33);
+        wiringPiI2CWrite(i2c_fd, TURN_LEFT);
     } else if (0 == strcmp(direct, "right")) {
         printf("turn right\n");
-        wiringPiI2CWrite(i2c_fd, 0x44);
+        wiringPiI2CWrite(i2c_fd, TURN_RIGHT);
     } else if (0 == strcmp(direct, "down")) {
         printf("go back\n");
-        wiringPiI2CWrite(i2c_fd, 0x22);
+        wiringPiI2CWrite(i2c_fd, GO_BACKWARD);
     } else if (0 == strcmp(direct, "up")) {
         printf("go ahead\n");
-        wiringPiI2CWrite(i2c_fd, 0x11);
+        wiringPiI2CWrite(i2c_fd, GO_FORWARD);
     } else {
         // do nothing
         printf("wrong direct\n");
