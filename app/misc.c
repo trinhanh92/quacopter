@@ -125,7 +125,7 @@ parse_request(char *request, int req_len, char *key, char *value)
         }
         value_len = (req_len - (key_ptr - temp_ptr) - strlen(key) - 1); // minus len of key and an '=' char
 
-    } else if (0 == strcmp(key, "direct")) {
+    } else if (0 == strcmp(key, "direct") || 0 == strcmp(key, "mode") || 0 == strcmp(key, "value")) {
         key_ptr = strstr(temp_ptr, key);    // search key position
     
         if (NULL == key_ptr) {

@@ -58,11 +58,11 @@ send_resp(struct MHD_Connection *connection,
     return ret;
 }
 
+
 /******************************************************************************
-* @brief This function used to process request data 
+* @brief Process control  request data 
 * 
-* @param[in]    url          - request command 
-* @param[in]    buffer       - request data 
+* @param[in]    buffer       - control request data 
 * @param[in]    buffer_len   - request data length
 * @param[in]    resp         - response data
 *
@@ -70,7 +70,7 @@ send_resp(struct MHD_Connection *connection,
 *
 */
 static int
-process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
+handle_control_req(char *buffer, int buffer_len, char *resp) 
 {
     int ret_val;
     char direct[10] = {0};
@@ -80,16 +80,6 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
     char *sig_created;
     char raw_data[50] = {0};
 
-    if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
-        // continue process
-    } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
-        // strcpy(resp, "No support\r\n");
-        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
-        return MHD_HTTP_OK;
-    } else {                                        // unsupport command
-        strcpy(resp, NOT_FOUND);
-        return MHD_HTTP_NOT_FOUND;
-    }
     // case post data null - response bad request
     if(0 == buffer_len) {
         strcpy(resp, BAD_REQUEST);
@@ -151,8 +141,136 @@ process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
         // do nothing
         printf("wrong direct\n");
     }
+
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
+    return MHD_HTTP_OK;
+}
+
+/******************************************************************************
+* @brief Process mode request data 
+* 
+* @param[in]    buffer       - request data 
+* @param[in]    buffer_len   - request data length
+* @param[in]    resp         - response data
+*
+* @return       http status code
+*
+*/
+static int
+handle_mode_req(char *buffer, int buffer_len, char *resp) 
+{
+    int ret_val;
+    char mode[10] = {0};
+    char value[10] = {0};
+    // char y_axis[10] = {0};
+    // char z_axis[10] = {0};
+    char sig_recv[50] = {0};
+    char *sig_created;
+    char raw_data[50] = {0};
+    int  run_mode;
+
+    // case post data null - response bad request
+    if(0 == buffer_len) {
+        strcpy(resp, BAD_REQUEST);
+        return MHD_HTTP_BAD_REQUEST;     
+    } 
+    ret_val = parse_request(buffer, buffer_len, "mode", mode);
+    if (ret_val < 0) {
+        printf("[POST] - Request params invalid\n");
+        //TODO: Handle params invalid
+        // strcpy(resp, "Invalid params\r\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    ret_val = parse_request(buffer, buffer_len, "value", value);
+    if (ret_val < 0) {
+        printf("[POST] - Request params invalid\n");
+        //TODO: Handle params invalid
+        // strcpy(resp, "Invalid params\r\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    // ret_val += json_parser(buffer, buffer_len, "y", y_axis);
+    // ret_val += json_parser(buffer, buffer_len, "z", z_axis);
+    ret_val += parse_request(buffer, buffer_len, "sig", sig_recv);
+    if (ret_val < 0) {
+        printf("[POST] - Request params invalid\n");
+        //TODO: Handle params invalid
+        // strcpy(resp, "Invalid params\r\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_PARAMS, "null");
+        return MHD_HTTP_OK;
+    }
+    printf("mode: %s\n", mode);
+    printf("value: %s\n", value);
+    // printf("y: %s\n", y_axis);
+    // printf("z: %s\n", z_axis);
+    printf("sig: %s\n", sig_recv);
+    // compare signature
+    snprintf(raw_data, sizeof (raw_data), "%s%s", mode, SERCRET_KEY);
+    sig_created = str2md5(raw_data, strlen (raw_data));
+    printf("signature created: %s\n", sig_created);
+    if (0 != strcmp(sig_created, sig_recv)) {
+        // invalid signature
+        printf("[POST] - Invalid signature\n");
+        // strcpy(resp, "Invalid signature\r\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, INVALID_SIGNATURE, "null");
+        //TODO: Handle invalid signature 
+        return MHD_HTTP_OK;
+    }
+
+    if (0 == strcmp(mode, "set")) {
+        if (0 == strcmp(mode, "auto")) {
+            set_mode(MODE_AUTO);
+        } else if (0 == strcmp(mode, "manual")) {
+            set_mode(MODE_MANUAL);
+        } else {
+            printf("invalid mode\n");
+        }
+    } else if (0 == strcmp(mode, "get")) {
+        run_mode = get_mode();   
+    } else {
+        printf("invalid command\n");
+    }
+
+    snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
+    // printf("Response: %s\n", resp);
+    return MHD_HTTP_OK;
+
+}
+
+/******************************************************************************
+* @brief This function used to process request data 
+* 
+* @param[in]    url          - request command 
+* @param[in]    buffer       - request data 
+* @param[in]    buffer_len   - request data length
+* @param[in]    resp         - response data
+*
+* @return       http status code
+*
+*/
+static int
+process_post_data(const char *url,char *buffer, int buffer_len, char *resp)
+{
+    if (0 == strcmp(url, CMD_DEV_CTRL)) {            // case 1.2
+    // process control request
+        printf("device control request\n");
+        return handle_control_req(buffer, buffer_len, resp);
+    }  else if (0 == strcmp(url, CMD_DEV_MODE)){
+    // process mode request
+        printf("device mode request\n");
+        return handle_mode_req(buffer, buffer_len, resp);
+    } else if (0 == strcmp(url, CMD_DEV_INFO)) {      // case 1.1
+    // process info request
+        printf("device info request\n");
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, NO_SUPPORT, "null");
+        return MHD_HTTP_OK;
+    } else {                                        // unsupport command
+        strcpy(resp, NOT_FOUND);
+        return MHD_HTTP_NOT_FOUND;
+    }
+
     return MHD_HTTP_OK;
 }
 
