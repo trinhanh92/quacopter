@@ -7,6 +7,7 @@
 #define PORT 6969
 // format data response
 #define RESP_DATA_FORMAT     "{\"error\": %d,\"data\": %s}"
+#define RESP_MODE_FORMAT     "{\"error\": %d,\"data\": {\"mode\": %x}}"
 #define RESP_DEV_INFO_FORMAT "{\"Device_info\":%s,\"Battery_info\":%s,\"Network_info\":%s}"
 // HTTP method
 #define GET                  0

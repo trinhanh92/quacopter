@@ -207,7 +207,7 @@ handle_mode_req(char *buffer, int buffer_len, char *resp)
     // printf("z: %s\n", z_axis);
     printf("sig: %s\n", sig_recv);
     // compare signature
-    snprintf(raw_data, sizeof (raw_data), "%s%s", mode, SERCRET_KEY);
+    snprintf(raw_data, sizeof (raw_data), "%s%s%s", mode, value, SERCRET_KEY);
     sig_created = str2md5(raw_data, strlen (raw_data));
     printf("signature created: %s\n", sig_created);
     if (0 != strcmp(sig_created, sig_recv)) {
@@ -220,15 +220,17 @@ handle_mode_req(char *buffer, int buffer_len, char *resp)
     }
 
     if (0 == strcmp(mode, "set")) {
-        if (0 == strcmp(mode, "auto")) {
-            set_mode(MODE_AUTO);
-        } else if (0 == strcmp(mode, "manual")) {
-            set_mode(MODE_MANUAL);
+        if (0 == strcmp(value, "auto")) {
+            set_mode(MODE_AUTO & 0xFF);
+        } else if (0 == strcmp(value, "manual")) {
+            set_mode(MODE_MANUAL & 0xFF);
         } else {
             printf("invalid mode\n");
         }
     } else if (0 == strcmp(mode, "get")) {
         run_mode = get_mode();   
+        snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_MODE_FORMAT, SUCCESS, run_mode);
+        return MHD_HTTP_OK;
     } else {
         printf("invalid command\n");
     }

@@ -145,9 +145,9 @@ parse_request(char *request, int req_len, char *key, char *value)
 }
 
 int get_mode() {
-    int mode;
-    file_read(&mode, 1);
-    return mode;
+    u8_t mode[4];
+    file_read(mode, 1);
+    return mode[0];
 }
 
 int set_mode(int mode) {
