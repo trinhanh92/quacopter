@@ -86,8 +86,8 @@ void *rf_thread_func(void * ptr)
 		// pthread_mutex_lock(&lock);
 		// g_lat_val.val = 10.87135;
 		// g_lng_val.val = 106.79974;
-		pthread_mutex_unlock(&lock); 
-        // rf_start_listenning();
+		// pthread_mutex_unlock(&lock); 
+        rf_start_listenning();
         while(rf_data_available()) {
             recv_len = nrf24_getDynamicPayloadSize();
             nrf24_read(&recv_buff, recv_len);
