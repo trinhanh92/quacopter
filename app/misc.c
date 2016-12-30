@@ -24,7 +24,7 @@ short2byte(i16_t inp_num, u8_t *byte_arr)
 void
 rf_data_to_send(req_data_t req_data, u8_t *send_data, int send_data_len)
 {
-    int i;
+    // int i;
     // u8_t x_buf[2];
     // u8_t y_buf[2];
     // u8_t z_buf[2];

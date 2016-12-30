@@ -10,9 +10,12 @@
 #include <wiringPiSPI.h>
 #include "rf24_drivers.h"
 #include "url_encode.h"
-
-extern volatile latlng_t g_lat_val;
-extern volatile latlng_t g_lng_val;
+#include <pthread.h>
+extern latlng_t g_lat_val;
+extern latlng_t g_lng_val;
+extern volatile int g_role;
+extern u8_t rf_data[];
+extern pthread_mutex_t lock;
 /******************************************************************************
 * @brief Print request header
 * 
@@ -80,7 +83,7 @@ handle_location_req(char *buffer, int buffer_len, char *resp)
     char *sig_created;
     char raw_data[100] = {0};
     req_data_t req_data;
-    u8_t rf_data[33] = {0};
+    // u8_t rf_data[33] = {0};
 
     // case post data null - response bad request
     if(0 == buffer_len) {
@@ -134,14 +137,16 @@ handle_location_req(char *buffer, int buffer_len, char *resp)
     req_data.z = 0;
     req_data.t = 0;
     req_data.m = 0;
+    pthread_mutex_lock(&lock);
     req_data.lat.val = g_lat_val.val;
     req_data.lng.val = g_lng_val.val;
+    pthread_mutex_unlock(&lock);
     strncpy(req_data.sig, sig_recv, sizeof sig_recv);
-    rf_data_to_send(req_data, rf_data, sizeof rf_data);
+    rf_data_to_send(req_data, rf_data, 32);
     // rf_stop_listenning();
     // rf_send_data(rf_data, sizeof rf_data);
     // rf_start_listenning();
-
+    g_role = 1;
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_LOC_FORMAT, SUCCESS, req_data.lat.val, req_data.lng.val);
     // printf("Response: %s\n", resp);
     return MHD_HTTP_OK;  
@@ -172,7 +177,6 @@ handle_control_req(char *buffer, int buffer_len, char *resp)
 
     char *sig_created;
     char raw_data[100] = {0};
-    u8_t rf_data[33] = {0};
     req_data_t req_data;
 
     // case post data null - response bad request
@@ -253,8 +257,8 @@ handle_control_req(char *buffer, int buffer_len, char *resp)
     req_data.z = atoi(z_val);
     req_data.t = atoi(t_val);
     req_data.m = atoi(m_val);
-    req_data.lat.val = 0;
-    req_data.lng.val = 0;
+    req_data.lat.val =  atof(lat_val);
+    req_data.lng.val =  atof(lng_val);
     strncpy(req_data.sig, sig_recv, sizeof sig_recv);
 
     // compare signature
@@ -279,11 +283,11 @@ handle_control_req(char *buffer, int buffer_len, char *resp)
 
     // forward request to Tiva through RF
     strncpy(req_data.sig, sig_recv, sizeof sig_recv);
-    rf_data_to_send(req_data, rf_data, sizeof rf_data);
+    rf_data_to_send(req_data, rf_data, 32);
     // rf_stop_listenning();
     // rf_send_data(rf_data, sizeof rf_data);
     // rf_start_listenning();
-
+    g_role = 1;
     snprintf(resp, MAX_RESP_BUFF_SIZE, RESP_DATA_FORMAT, SUCCESS, "null");
     // printf("Response: %s\n", resp);
     return MHD_HTTP_OK;

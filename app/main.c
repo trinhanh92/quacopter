@@ -10,10 +10,14 @@
 #include <wiringPiSPI.h>
 #include "rf24_drivers.h"
 #include <pthread.h>
+#include <unistd.h>
 
 unsigned char * p_start_rmc = NULL;
-volatile latlng_t g_lat_val;
-volatile latlng_t g_lng_val;
+latlng_t g_lat_val;
+latlng_t g_lng_val;
+volatile int g_role = 0;
+u8_t rf_data[33] = {0};
+pthread_mutex_t lock;
 /**
 * @brief function handle gps process in gps thread
 */
@@ -26,11 +30,19 @@ main ()
     struct MHD_Daemon *daemon;
     int ret_val;
     // int spi_fd;                   // spi file description
-    u8_t spi_data[6];
-    req_data_t req_data;
+    // u8_t spi_data[6];
+    // uint8_t recv_buff[100] = {0};
+    // int recv_len = 0;
+    // req_data_t req_data;
    
    // init RF24
-    // rf_init();
+    rf_init();
+
+    if (pthread_mutex_init(&lock, NULL) != 0)
+    {
+        printf("\n mutex init failed\n");
+        return 1;
+    }
 
     ret_val = pthread_create (&rf_thread, NULL, rf_thread_func, NULL);
     if (ret_val) {
@@ -41,7 +53,7 @@ main ()
     // spi_fd = wiringPiSPISetup(SPI_CS_CHANNEL, SPI_CLK);
 
     //start server
-    daemon = MHD_start_daemon (MHD_USE_THREAD_PER_CONNECTION | MHD_USE_DEBUG, PORT, NULL, 
+    daemon = MHD_start_daemon (MHD_USE_THREAD_PER_CONNECTION, PORT, NULL, 
                     NULL, &http_resp_handler, NULL,
                     MHD_OPTION_NOTIFY_COMPLETED, &request_completed,
                     NULL,
@@ -55,20 +67,8 @@ main ()
     }
     printf("http server started\n");
     getchar ();
-    // request to quadcopter to land
-    // package data to spi slave
-    // req_data.x = 0;
-    // req_data.y = 0;
-    // req_data.z = 0;
-    // spi_data_to_send(req_data, spi_data, sizeof spi_data);
-    // rf_stop_listenning();
-    // rf_send_data(spi_data, sizeof spi_data);
-    // rf_start_listenning();
-    // //TODO: send data RF
-    // wiringPiSPIDataRW(SPI_CS_CHANNEL, spi_data, 2);
-    // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[2], 2);
-    // wiringPiSPIDataRW(SPI_CS_CHANNEL, &spi_data[4] , 2);
     MHD_stop_daemon (daemon);
+    pthread_mutex_destroy(&lock);
     printf("http server stopped\n");
     return 0;
 }
@@ -76,15 +76,33 @@ main ()
 void *rf_thread_func(void * ptr)
 {
   uint8_t recv_buff[100] = {0};
-  // latlng_t lat_val, lng_val;
+  unsigned int recv_len;
+  // latlng_t lat_val, lng_val; 
+ // g_lat_val.val = 10.87135;
+ // g_lng_val.val = 106.79974; 
+
   while (1) {
-    // while(rf_data_available()) {
-    //     nrf24_read(&recv_buff, sizeof recv_buff);
-    //     printf("receiving data: %s\n", recv_buff);
-    //     memcpy(g_lat_val.val_in_bytes, &recv_buff[1], 4);
-    //     memcpy(g_lng_val.val_in_bytes, &recv_buff[5], 4);
-    // }
-    sleep(1);
+    if (g_role == 0) {
+		// pthread_mutex_lock(&lock);
+		// g_lat_val.val = 10.87135;
+		// g_lng_val.val = 106.79974;
+		pthread_mutex_unlock(&lock); 
+        // rf_start_listenning();
+        while(rf_data_available()) {
+            recv_len = nrf24_getDynamicPayloadSize();
+            nrf24_read(&recv_buff, recv_len);
+            printf("receiving data: %s\n", recv_buff);
+			pthread_mutex_lock(&lock);
+            memcpy(g_lat_val.val_in_bytes, &recv_buff[1], 4);
+            memcpy(g_lng_val.val_in_bytes, &recv_buff[5], 4);
+			pthread_mutex_unlock(&lock); 
+        }
+    } else {
+        rf_stop_listenning();
+        rf_send_data(rf_data, 32);
+        g_role = 0;
+    }
+    usleep(1);
   }
 }
 
